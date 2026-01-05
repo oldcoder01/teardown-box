@@ -1,6 +1,14 @@
 # Teardown Report (Sample)
 
-_Generated: 2026-01-05T09:57:32-08:00_
+## Teardown in a Box (48-hour non-invasive teardown)
+
+**What this is:** A fast, non-invasive teardown that turns a messy system into a prioritized fix list.
+**What you get:** A report like this + a short call to confirm priorities + a fix-now shortlist.
+**Who it's for:** Small SaaS / agencies / teams with recurring incidents, slow Postgres, and unclear next steps.
+
+**Next step:** [Book 15 minutes](https://buzzyplanet.com/contact) — info@buzzyplanet.com
+
+_Generated: 2026-01-05T12:20:07-08:00_
 
 ## Executive summary
 
@@ -31,6 +39,22 @@ This report is generated from the following snapshot artifacts (synthetic fixtur
 - **[High] Postgres shows heavy time spent in a small set of queries (pg_stat_statements)** (Effort: Medium, Blast radius: Medium) — Fix now: *Validate query plans and implement the highest-impact index/query changes*
 - **[High] Connection pool appears saturated (high client usage / waiting queue)** (Effort: Medium, Blast radius: Medium) — Fix now: *Reduce pool pressure and protect the DB from connection storms*
 
+## Triage table (skim-friendly)
+
+| Sev | Area | Finding | Why it matters | Fix-now | Effort | Risk |
+|---|---|---|---|---|---|---|
+| Medium | Cost | [**Possible overprovisioning signal: m5.2xlarge at low p95 utilization**](#finding-0001) | If sustained utilization is low, you may be paying for capacity you don't need | Create a rightsizing candidate and validate against peak/burst patterns | Medium | High |
+| Low | Cost | [**EBS gp2 volumes detected; consider gp3 for cost/performance control**](#finding-0002) | gp3 often provides better baseline performance and more predictable tuning | Evaluate gp3 migration plan (low-risk, validate per workload) | Low | Medium |
+| High | Performance | [**High sequential scan activity on large tables (public.orders, public.events)**](#finding-0003) | Repeated sequential scans on large tables inflate latency and CPU, especially under concurrency | Identify query patterns causing seq_scans and add targeted indexes | Medium | Medium |
+| High | Performance | [**Postgres shows heavy time spent in a small set of queries (pg_stat_statements)**](#finding-0004) | A handful of queries often dominate database load | Validate query plans and implement the highest-impact index/query changes | Medium | Medium |
+| High | Reliability | [**Connection pool appears saturated (high client usage / waiting queue)**](#finding-0005) | When the pool saturates, requests queue and tail latency spikes | Reduce pool pressure and protect the DB from connection storms | Medium | Medium |
+| High | Reliability | [**systemd service appears to be flapping (restart loop)**](#finding-0006) | Restart loops create intermittent downtime, amplify load (retry storms), and usually mask a real dependency issue (DB, DNS, config, or secr… | Pull recent logs and verify dependencies; add backoff while fixing root cause | Medium | Medium |
+| Medium | Reliability | [**Autovacuum pressure likely on (public.orders, public.events, public.sessions) with high dead tuple ratios**](#finding-0007) | High dead tuples increase bloat and slow queries (more pages to scan, worse cache locality) | Inspect worst tables and tune vacuum/analyze thresholds where needed | Medium | Medium |
+| Medium | Reliability | [**Disk usage is high (87%) on at least one filesystem**](#finding-0008) | High disk usage is a common outage trigger (writes fail, services crash, databases stall) | Identify top disk consumers and cap runaway logs safely | Medium | Medium |
+| High | Security | [**Unexpected public listener detected on port 5432**](#finding-0009) | Public listeners expand the attack surface | Restrict bind address and enforce network controls | Medium | Medium |
+| Medium | Security | [**Legacy TLS versions appear enabled (TLS 1.0/1.1)**](#finding-0010) | Older TLS versions weaken security posture and may violate compliance expectations | Disable TLS 1.0/1.1 and standardize a modern policy | Medium | Medium |
+| Low | Security | [**HSTS is missing**](#finding-0011) | Without HSTS, clients can be tricked into initial HTTP connections in some downgrade scenarios | Add an HSTS header after validating HTTPS-only readiness | Medium | Medium |
+
 ## Assumptions & limits (what this report is / isn't)
 
 This report is based on a point-in-time snapshot of the artifacts listed in **Inputs reviewed**.
@@ -46,10 +70,43 @@ It intentionally avoids invasive actions. Findings are prioritized by *severity 
 - Cost signals are directional (rightsizing recommendations require longer windows and peak analysis).
 - Some findings depend on business context (SLOs, traffic patterns, compliance requirements).
 
-**Decision rules used**
-- *High severity* = likely to cause outage or material security exposure.
-- *High impact* = affects user-facing latency/availability or increases breach surface.
-- *Confidence* reflects evidence strength from artifacts (not "gut feel").
+## Scoring rubric (how to read this report)
+
+**Severity**
+- **Critical**: active or likely outage/security exposure; fix immediately.
+- **High**: probable incident, meaningful security risk, or major user impact.
+- **Medium**: important hygiene/perf work; schedule into the next sprint.
+- **Low**: improvements/opportunities; do when convenient or bundle with other work.
+
+**Confidence**
+- **High**: direct evidence in artifacts (clear config/log/metric signal).
+- **Medium**: strong indicators, but needs a quick confirm in live systems.
+- **Low**: directional signal; must validate before acting (common for cost).
+
+**Effort**
+- **Low**: < 1–2 hours to ship a safe change (plus verification).
+- **Medium**: 0.5–2 days, coordination or testing required.
+- **High**: multi-day work, refactors, migrations, or multiple systems touched.
+
+**Blast radius**
+- **Low**: isolated change; easy rollback.
+- **Medium**: touches shared components (LB/DB/pooler); requires coordination.
+- **High**: broad change surface; run a staged rollout + explicit rollback plan.
+
+## What I need from you (access options)
+
+Prospects often worry that a contractor needs deep access. This teardown can be done in tiers:
+
+**Option A — No access (artifact-only)**
+- You send a snapshot bundle (similar to the fixtures in this demo): service status, configs, key metrics exports, database stats.
+- Best for fast triage and a prioritized plan.
+
+**Option B — Read-only access (preferred for accuracy)**
+- Cloud metrics (CloudWatch/Stackdriver), load balancer stats, DB performance insights, logs (read-only), and IaC state/plan output.
+- This turns "likely" into "we're sure" without invasive changes.
+
+**Option C — Timeboxed elevated access (rare)**
+- Only if required for a specific fix (e.g., emergency mitigation), with explicit scope and a rollback plan.
 
 ## What I would verify with real access (48-hour verification plan)
 
@@ -71,7 +128,7 @@ This is the short list of checks I run to turn snapshot findings into "we're sur
 - Check lock contention and connection churn (pg_stat_activity, pooler stats, deploy windows).
 
 **Cost**
-- Pull 30-90 days utilization and include peak events; validate headroom requirements.
+- Pull 30–90 days utilization and include peak events; validate headroom requirements.
 - Confirm storage policy: gp2/gp3 usage, snapshot retention, orphaned volumes.
 - Tie spend to workload (unit cost per request/job) to avoid "savings that break SLOs".
 
@@ -84,6 +141,7 @@ This is the short list of checks I run to turn snapshot findings into "we're sur
 
 ### Security
 
+<a id="finding-0009"></a>
 #### [High] Unexpected public listener detected on port 5432
 
 **Impact:** Public listeners expand the attack surface. Databases and caches should not be exposed to the internet without strong justification, network controls, and monitoring.
@@ -93,7 +151,7 @@ This is the short list of checks I run to turn snapshot findings into "we're sur
 **Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
-- fixtures/linux/ss_lntp.txt:L5-L5 (Bound to 0.0.0.0:5432)
+- [fixtures/linux/ss_lntp.txt:L5-L5 (Bound to 0.0.0.0:5432)](#ev-38959d52f8)
 
 **Fix now:** Restrict bind address and enforce network controls
 
@@ -119,6 +177,7 @@ sudo ss -lntp | head -50
 - What enforces network policy today (security groups, nftables, kubernetes, etc.)?
 - Do you have a documented threat model / compliance constraints?
 
+<a id="finding-0010"></a>
 #### [Medium] Legacy TLS versions appear enabled (TLS 1.0/1.1)
 
 **Impact:** Older TLS versions weaken security posture and may violate compliance expectations. Most modern clients support TLS 1.2+.
@@ -128,7 +187,7 @@ sudo ss -lntp | head -50
 **Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
-- fixtures/edge/tls_scan.txt (TLSv1.0/TLSv1.1 enabled in scan summary)
+- [fixtures/edge/tls_scan.txt (TLSv1.0/TLSv1.1 enabled in scan summary)](#ev-8eba99682e)
 
 **Fix now:** Disable TLS 1.0/1.1 and standardize a modern policy
 
@@ -153,6 +212,7 @@ ssl_protocols TLSv1.2 TLSv1.3;
 - Any compliance requirements (PCI/HIPAA/SOC2) driving a specific policy?
 - Any legacy clients that truly require TLS 1.0/1.1?
 
+<a id="finding-0011"></a>
 #### [Low] HSTS is missing
 
 **Impact:** Without HSTS, clients can be tricked into initial HTTP connections in some downgrade scenarios. HSTS is usually a low-risk hardening win for public HTTPS sites.
@@ -162,7 +222,7 @@ ssl_protocols TLSv1.2 TLSv1.3;
 **Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
-- fixtures/edge/tls_scan.txt (HSTS marked missing in scan summary)
+- [fixtures/edge/tls_scan.txt (HSTS marked missing in scan summary)](#ev-23fd6b3517)
 
 **Fix now:** Add an HSTS header after validating HTTPS-only readiness
 
@@ -186,6 +246,7 @@ add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" alway
 
 ### Reliability
 
+<a id="finding-0005"></a>
 #### [High] Connection pool appears saturated (high client usage / waiting queue)
 
 **Impact:** When the pool saturates, requests queue and tail latency spikes. This often presents as timeouts and cascading retries, which further increases load.
@@ -195,7 +256,7 @@ add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" alway
 **Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
-- fixtures/postgres/pg_pool_stats.json (clients=4860/5000, waiting=322, avg_wait_ms=185.0)
+- [fixtures/postgres/pg_pool_stats.json (clients=4860/5000, waiting=322, avg_wait_ms=185.0)](#ev-5ee8609c2c)
 
 **Fix now:** Reduce pool pressure and protect the DB from connection storms
 
@@ -221,6 +282,7 @@ psql -c "SELECT state, count(*) FROM pg_stat_activity GROUP BY state;"
 - Are there deploy events that align with wait spikes (connection churn)?
 - Are long-running queries holding connections open?
 
+<a id="finding-0006"></a>
 #### [High] systemd service appears to be flapping (restart loop)
 
 **Impact:** Restart loops create intermittent downtime, amplify load (retry storms), and usually mask a real dependency issue (DB, DNS, config, or secrets). They also consume CPU and can trigger cascading failures.
@@ -230,7 +292,7 @@ psql -c "SELECT state, count(*) FROM pg_stat_activity GROUP BY state;"
 **Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
-- fixtures/linux/systemctl_status.txt:L8-L8 (Restart counter is 27)
+- [fixtures/linux/systemctl_status.txt:L8-L8 (Restart counter is 27)](#ev-b723445da9)
 
 **Fix now:** Pull recent logs and verify dependencies; add backoff while fixing root cause
 
@@ -255,6 +317,7 @@ sudo systemctl status api.service
 - What database/network path does the service use (VPC, SG, local socket)?
 - Do you have an incident timeline for when this started?
 
+<a id="finding-0007"></a>
 #### [Medium] Autovacuum pressure likely on (public.orders, public.events, public.sessions) with high dead tuple ratios
 
 **Impact:** High dead tuples increase bloat and slow queries (more pages to scan, worse cache locality). If vacuum can't keep up, performance degrades and storage costs rise.
@@ -264,7 +327,7 @@ sudo systemctl status api.service
 **Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
-- fixtures/postgres/pg_stat_user_tables.csv (Tables with high n_dead_tup relative to n_live_tup)
+- [fixtures/postgres/pg_stat_user_tables.csv (Tables with high n_dead_tup relative to n_live_tup)](#ev-14ed22c00e)
 
 **Fix now:** Inspect worst tables and tune vacuum/analyze thresholds where needed
 
@@ -290,6 +353,7 @@ psql -c "SELECT relname, n_live_tup, n_dead_tup, last_autovacuum FROM pg_stat_us
 - Are you using managed defaults (RDS/Aurora) or custom autovac settings?
 - Do you have strict maintenance window constraints?
 
+<a id="finding-0008"></a>
 #### [Medium] Disk usage is high (87%) on at least one filesystem
 
 **Impact:** High disk usage is a common outage trigger (writes fail, services crash, databases stall). It also hides other problems (logs grow until the host falls over).
@@ -299,7 +363,7 @@ psql -c "SELECT relname, n_live_tup, n_dead_tup, last_autovacuum FROM pg_stat_us
 **Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
-- fixtures/linux/df_h.txt:L2-L2 (Filesystem above threshold: /dev/nvme0n1p2  100G   87G   13G  87% /)
+- [fixtures/linux/df_h.txt:L2-L2 (Filesystem above threshold: /dev/nvme0n1p2  100G   87G   13G  87% /)](#ev-981e1d7f5a)
 
 **Fix now:** Identify top disk consumers and cap runaway logs safely
 
@@ -328,6 +392,7 @@ sudo systemctl restart systemd-journald || true
 
 ### Performance
 
+<a id="finding-0003"></a>
 #### [High] High sequential scan activity on large tables (public.orders, public.events)
 
 **Impact:** Repeated sequential scans on large tables inflate latency and CPU, especially under concurrency. This is a common root cause of 'DB is slow' incidents.
@@ -337,7 +402,7 @@ sudo systemctl restart systemd-journald || true
 **Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
-- fixtures/postgres/pg_stat_user_tables.csv (Tables with high reltuples and high seq_scan)
+- [fixtures/postgres/pg_stat_user_tables.csv (Tables with high reltuples and high seq_scan)](#ev-909b017bb4)
 
 **Fix now:** Identify query patterns causing seq_scans and add targeted indexes
 
@@ -363,6 +428,7 @@ psql -c "SELECT relname, seq_scan, idx_scan, n_live_tup, n_dead_tup FROM pg_stat
 - Do you have read replicas or a separate analytics store?
 - Any existing indexes that are unused or misaligned with query patterns?
 
+<a id="finding-0004"></a>
 #### [High] Postgres shows heavy time spent in a small set of queries (pg_stat_statements)
 
 **Impact:** A handful of queries often dominate database load. Improving them typically reduces p95 latency, stabilizes CPU, and lowers infra cost by delaying scale-up.
@@ -372,7 +438,7 @@ psql -c "SELECT relname, seq_scan, idx_scan, n_live_tup, n_dead_tup FROM pg_stat
 **Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
-- fixtures/postgres/pg_stat_statements.csv:L1-L4 (Top queries by total_time_ms (sample))
+- [fixtures/postgres/pg_stat_statements.csv:L1-L4 (Top queries by total_time_ms (sample))](#ev-473008823f)
 
 **Fix now:** Validate query plans and implement the highest-impact index/query changes
 
@@ -403,16 +469,17 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_sessions_token ON public.sessions (s
 
 ### Cost
 
+<a id="finding-0001"></a>
 #### [Medium] Possible overprovisioning signal: m5.2xlarge at low p95 utilization
 
 **Impact:** If sustained utilization is low, you may be paying for capacity you don't need. Rightsizing can reduce spend without reducing reliability (when validated carefully).
 
 **Confidence:** Low
 
-**Effort / Blast radius:** Medium / Medium
+**Effort / Blast radius:** Medium / High
 
 **Evidence:**
-- fixtures/cost/utilization_summary.json (instance=i-0123456789abcdef0, cpu_p95=12.4%, mem_p95=28.1% over 30 days)
+- [fixtures/cost/utilization_summary.json (instance=i-0123456789abcdef0, cpu_p95=12.4%, mem_p95=28.1% over 30 days)](#ev-87d6e8aded)
 
 **Fix now:** Create a rightsizing candidate and validate against peak/burst patterns
 
@@ -421,6 +488,11 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_sessions_token ON public.sessions (s
 # If safe, test downsize one step in a canary environment first
 aws cloudwatch get-metric-statistics ...  # (example: CPUUtilization p95/p99)
 ```
+
+**Validation / success / rollback:**
+- Validate safely: Validate with 30–90d metrics and test one-step downsize on a canary; ensure p95/p99 latency and error rate do not regress.
+- Success metric: Monthly spend reduced without SLO regression (p95 latency, error rate, saturation).
+- Rollback: Scale back to prior instance type/size immediately; revert autoscaling/schedule changes if applied.
 
 **7-day plan:**
 - Pull 30-90d utilization including peak events and deploy windows.
@@ -437,16 +509,17 @@ aws cloudwatch get-metric-statistics ...  # (example: CPUUtilization p95/p99)
 - Any CPU credit/burstable instances involved?
 - What is your rollback plan if latency increases after downsize?
 
+<a id="finding-0002"></a>
 #### [Low] EBS gp2 volumes detected; consider gp3 for cost/performance control
 
 **Impact:** gp3 often provides better baseline performance and more predictable tuning. Switching from gp2 to gp3 can reduce cost and decouple size from performance.
 
 **Confidence:** Medium
 
-**Effort / Blast radius:** Medium / Medium
+**Effort / Blast radius:** Low / Medium
 
 **Evidence:**
-- fixtures/cost/ebs_volumes.csv (gp2 volumes: vol-0aaa111)
+- [fixtures/cost/ebs_volumes.csv (gp2 volumes: vol-0aaa111)](#ev-4b5c109bc2)
 
 **Fix now:** Evaluate gp3 migration plan (low-risk, validate per workload)
 
@@ -455,6 +528,11 @@ aws cloudwatch get-metric-statistics ...  # (example: CPUUtilization p95/p99)
 # Validate latency/IOPS requirements before and after
 aws ec2 modify-volume --volume-id <vol-id> --volume-type gp3 --iops 3000 --throughput 125
 ```
+
+**Validation / success / rollback:**
+- Validate safely: Migrate a non-critical volume first; compare I/O latency and throughput before/after under normal and peak load.
+- Success metric: Lower storage cost and/or improved baseline IOPS/throughput with no latency regressions.
+- Rollback: Switch volume type back (or increase gp3 IOPS/throughput) if latency regresses.
 
 **7-day plan:**
 - Inventory gp2 volumes and identify those safe to migrate first.
@@ -468,3 +546,184 @@ aws ec2 modify-volume --volume-id <vol-id> --volume-type gp3 --iops 3000 --throu
 **Questions I need answered:**
 - Are there workloads with unusually high IOPS/throughput requirements?
 - Do you have maintenance windows for volume modifications?
+
+
+## Raw evidence
+
+Evidence links above jump here. Snippets are extracted from the fixture bundle used to generate this report.
+
+<a id="ev-14ed22c00e"></a>
+### fixtures/postgres/pg_stat_user_tables.csv (Tables with high n_dead_tup relative to n_live_tup)
+
+<details>
+<summary>Show snippet</summary>
+
+```text
+    1: schemaname,relname,seq_scan,seq_tup_read,idx_scan,n_tup_ins,n_tup_upd,n_tup_del,n_live_tup,n_dead_tup,last_vacuum,last_autovacuum,last_analyze,last_autoanalyze,reltuples
+    2: public,orders,18250,92384012,1200,250000,12000,800,2150000,420000,,2025-12-29 03:10:00,2025-12-30 04:10:00,2025-12-31 04:10:00,2300000
+    3: public,events,9050,55120000,500,1100000,5000,1000,9100000,1250000,,2025-12-15 02:00:00,2025-12-20 02:00:00,2025-12-20 02:00:00,10300000
+    4: public,users,120,8200,55000,5000,2000,10,84000,1200,2025-12-28 01:00:00,2025-12-31 01:00:00,2025-12-31 01:05:00,2025-12-31 01:05:00,84000
+    5: public,sessions,240,56000,2200,800000,900000,200000,1200000,950000,,2025-12-10 01:00:00,2025-12-10 01:05:00,2025-12-10 01:05:00,1250000
+```
+
+</details>
+
+<a id="ev-23fd6b3517"></a>
+### fixtures/edge/tls_scan.txt (HSTS marked missing in scan summary)
+
+<details>
+<summary>Show snippet</summary>
+
+```text
+    1: # Fake TLS scan summary
+    2: TLSv1.0: enabled
+    3: TLSv1.1: enabled
+    4: TLSv1.2: enabled
+    5: TLSv1.3: enabled
+    6: HSTS: missing
+    7: Cipher suites: includes some legacy CBC suites
+```
+
+</details>
+
+<a id="ev-38959d52f8"></a>
+### fixtures/linux/ss_lntp.txt:L5-L5 (Bound to 0.0.0.0:5432)
+
+<details>
+<summary>Show snippet</summary>
+
+```text
+    5: LISTEN 0      244    0.0.0.0:5432         0.0.0.0:*          users:(("postgres",pid=1201,fd=7))
+```
+
+</details>
+
+<a id="ev-473008823f"></a>
+### fixtures/postgres/pg_stat_statements.csv:L1-L4 (Top queries by total_time_ms (sample))
+
+<details>
+<summary>Show snippet</summary>
+
+```text
+    1: queryid,calls,total_time_ms,mean_time_ms,rows,query
+    2: 1001,8421,912345.5,108.3,8421,"SELECT id,email,last_login FROM users WHERE email = $1"
+    3: 1002,421,602110.2,1430.4,421,"SELECT * FROM orders WHERE created_at >= $1 AND created_at < $2 ORDER BY created_at DESC LIMIT 200"
+    4: 1003,11021,401221.9,36.4,11021,"UPDATE sessions SET expires_at = $1 WHERE session_token = $2"
+```
+
+</details>
+
+<a id="ev-4b5c109bc2"></a>
+### fixtures/cost/ebs_volumes.csv (gp2 volumes: vol-0aaa111)
+
+<details>
+<summary>Show snippet</summary>
+
+```text
+    1: volume_id,type,size_gb,iops,throughput_mbps,attached_instance_id
+    2: vol-0aaa111,gp2,500,1500,,i-0123456789abcdef0
+    3: vol-0bbb222,gp3,200,3000,125,i-0123456789abcdef0
+```
+
+</details>
+
+<a id="ev-5ee8609c2c"></a>
+### fixtures/postgres/pg_pool_stats.json (clients=4860/5000, waiting=322, avg_wait_ms=185.0)
+
+<details>
+<summary>Show snippet</summary>
+
+```text
+    1: {
+    2:   "pooler": "pgbouncer",
+    3:   "db": "app",
+    4:   "max_client_conn": 5000,
+    5:   "default_pool_size": 50,
+    6:   "current_clients": 4860,
+    7:   "current_waiting": 322,
+    8:   "avg_wait_ms": 185,
+    9:   "peak_wait_ms": 2400,
+   10:   "notes": "Spikes observed during deploy window"
+   11: }
+```
+
+</details>
+
+<a id="ev-87d6e8aded"></a>
+### fixtures/cost/utilization_summary.json (instance=i-0123456789abcdef0, cpu_p95=12.4%, mem_p95=28.1% over 30 days)
+
+<details>
+<summary>Show snippet</summary>
+
+```text
+    1: {
+    2:   "instance_id": "i-0123456789abcdef0",
+    3:   "instance_type": "m5.2xlarge",
+    4:   "cpu_p95_percent": 12.4,
+    5:   "cpu_p50_percent": 4.8,
+    6:   "memory_p95_percent": 28.1,
+    7:   "network_p95_mbps": 42.0,
+    8:   "period_days": 30,
+    9:   "notes": "Workload steady; no batch peaks detected"
+   10: }
+```
+
+</details>
+
+<a id="ev-8eba99682e"></a>
+### fixtures/edge/tls_scan.txt (TLSv1.0/TLSv1.1 enabled in scan summary)
+
+<details>
+<summary>Show snippet</summary>
+
+```text
+    1: # Fake TLS scan summary
+    2: TLSv1.0: enabled
+    3: TLSv1.1: enabled
+    4: TLSv1.2: enabled
+    5: TLSv1.3: enabled
+    6: HSTS: missing
+    7: Cipher suites: includes some legacy CBC suites
+```
+
+</details>
+
+<a id="ev-909b017bb4"></a>
+### fixtures/postgres/pg_stat_user_tables.csv (Tables with high reltuples and high seq_scan)
+
+<details>
+<summary>Show snippet</summary>
+
+```text
+    1: schemaname,relname,seq_scan,seq_tup_read,idx_scan,n_tup_ins,n_tup_upd,n_tup_del,n_live_tup,n_dead_tup,last_vacuum,last_autovacuum,last_analyze,last_autoanalyze,reltuples
+    2: public,orders,18250,92384012,1200,250000,12000,800,2150000,420000,,2025-12-29 03:10:00,2025-12-30 04:10:00,2025-12-31 04:10:00,2300000
+    3: public,events,9050,55120000,500,1100000,5000,1000,9100000,1250000,,2025-12-15 02:00:00,2025-12-20 02:00:00,2025-12-20 02:00:00,10300000
+    4: public,users,120,8200,55000,5000,2000,10,84000,1200,2025-12-28 01:00:00,2025-12-31 01:00:00,2025-12-31 01:05:00,2025-12-31 01:05:00,84000
+    5: public,sessions,240,56000,2200,800000,900000,200000,1200000,950000,,2025-12-10 01:00:00,2025-12-10 01:05:00,2025-12-10 01:05:00,1250000
+```
+
+</details>
+
+<a id="ev-981e1d7f5a"></a>
+### fixtures/linux/df_h.txt:L2-L2 (Filesystem above threshold: /dev/nvme0n1p2  100G   87G   13G  87% /)
+
+<details>
+<summary>Show snippet</summary>
+
+```text
+    2: /dev/nvme0n1p2  100G   87G   13G  87% /
+```
+
+</details>
+
+<a id="ev-b723445da9"></a>
+### fixtures/linux/systemctl_status.txt:L8-L8 (Restart counter is 27)
+
+<details>
+<summary>Show snippet</summary>
+
+```text
+    8: Jan 05 07:41:22 host systemd[1]: api.service: Scheduled restart job, restart counter is at 27.
+```
+
+</details>

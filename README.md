@@ -13,13 +13,15 @@ A small CLI that ingests sample data (fixtures) and produces a client-ready repo
 From the project root:
 
 ```bash
-python -m teardown_box.cli run --fixtures fixtures --out docs --html
+python -m teardown_box.cli run --fixtures fixtures --out docs --html --cta-url "https://<your-link>" --contact-line "you@domain.com"
 ```
 
 Outputs:
 - `docs/sample-report.md`
-- `docs/sample-report.html` (fallback HTML wrapper)
+- `docs/sample-report.html` (rendered HTML)
+- `docs/index.html` (GitHub Pages entrypoint)
 
 ## Notes
 - Fixtures are fake but realistic-ish.
-- HTML rendering is dependency-free and embeds the markdown as preformatted text. If you want nicer HTML, we can add a markdown renderer later.
+- HTML rendering uses `markdown2` to produce a styled report (with TOC, tables, and clickable evidence).
+- The generated HTML is committed to `docs/` so GitHub Pages is purely static (no build step).

@@ -33,6 +33,11 @@ class CostSignalsCheck:
                             "Rightsizing can reduce spend without reducing reliability (when validated carefully)."
                         ),
                         confidence="Low",
+                        effort="Medium",
+                        blast_radius="High",
+                        validate_safely="Validate with 30–90d metrics and test one-step downsize on a canary; ensure p95/p99 latency and error rate do not regress.",
+                        success_metric="Monthly spend reduced without SLO regression (p95 latency, error rate, saturation).",
+                        rollback="Scale back to prior instance type/size immediately; revert autoscaling/schedule changes if applied.",
                         evidence=[
                             EvidenceRef(
                                 path="fixtures/cost/utilization_summary.json",
@@ -79,6 +84,11 @@ class CostSignalsCheck:
                             "Switching from gp2 to gp3 can reduce cost and decouple size from performance."
                         ),
                         confidence="Medium",
+                        effort="Low",
+                        blast_radius="Medium",
+                        validate_safely="Migrate a non-critical volume first; compare I/O latency and throughput before/after under normal and peak load.",
+                        success_metric="Lower storage cost and/or improved baseline IOPS/throughput with no latency regressions.",
+                        rollback="Switch volume type back (or increase gp3 IOPS/throughput) if latency regresses.",
                         evidence=[
                             EvidenceRef(
                                 path="fixtures/cost/ebs_volumes.csv",

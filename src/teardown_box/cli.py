@@ -16,11 +16,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    runp = sub.add_parser("run", help="Run checks against fixtures and generate reports")
-    runp.add_argument("--fixtures", default="fixtures", help="Path to fixtures folder")
-    runp.add_argument("--out", default="docs", help="Output folder for reports")
-    runp.add_argument("--title", default="Teardown Report (Sample)", help="Report title")
-    runp.add_argument("--html", action="store_true", help="Also write an HTML report (fallback wrapper)")
+    run_p = sub.add_parser("run", help="Run all checks against a fixtures folder and emit a report.")
+    run_p.add_argument("--fixtures", required=True, help="Path to fixtures root (e.g., ./fixtures)")
+    run_p.add_argument("--out", required=True, help="Output directory for docs (e.g., ./docs)")
+    run_p.add_argument("--title", default="Teardown Report (Sample)", help="Report title")
+    run_p.add_argument("--html", action="store_true", help="Also generate HTML output")
+    run_p.add_argument("--cta-label", default="Book 15 minutes", help="CTA label shown near the top of the report")
+    run_p.add_argument("--cta-url", default="#", help="CTA URL (Calendly, mailto, website contact page, etc.)")
+    run_p.add_argument(
+        "--contact-line",
+        default="Replace this with your email / Calendly link",
+        help="Short contact note shown next to the CTA",
+    )
 
     args = parser.parse_args(argv)
 
@@ -35,8 +42,11 @@ def main(argv: list[str] | None = None) -> int:
             title=args.title,
             generated_at_iso=generated_at,
             inputs_reviewed=res.inputs_reviewed,
+            fixtures_root=args.fixtures,
+            cta_label=args.cta_label,
+            cta_url=args.cta_url,
+            contact_line=args.contact_line,
         )
-
 
         md_path = out_dir / "sample-report.md"
         md_path.write_text(md, encoding="utf-8")
@@ -46,9 +56,18 @@ def main(argv: list[str] | None = None) -> int:
             html_path = out_dir / "sample-report.html"
             html_path.write_text(html_doc, encoding="utf-8")
 
+            # Convenience for GitHub Pages: publish docs/index.html by default.
+            index_path = out_dir / "index.html"
+            index_path.write_text(html_doc, encoding="utf-8")
+
+            nojekyll = out_dir / ".nojekyll"
+            if not nojekyll.exists():
+                nojekyll.write_text("", encoding="utf-8")
+
         print(f"Wrote: {md_path}")
         if args.html:
             print(f"Wrote: {out_dir / 'sample-report.html'}")
+            print(f"Wrote: {out_dir / 'index.html'}")
         return 0
 
     return 1

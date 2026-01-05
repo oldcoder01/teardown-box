@@ -31,3 +31,16 @@ This is the same playbook I use on real systems. The CLI demo is a portable vers
 - A tangible artifact you can share internally (Markdown and optional HTML)
 - Clear next steps (7-day / 30-day)
 - A short list of questions that unblock deeper remediation work
+## Access options (designed to avoid “root access” fear)
+
+- **Artifact-only (no access):** You send a snapshot bundle (like this demo). Good for fast triage + a prioritized plan.
+- **Read-only (preferred):** Metrics/logs/DB insights/IaC plan output with strict read-only permissions. Turns “likely” into “we're sure.”
+- **Timeboxed elevated access (rare):** Only for a specific fix with explicit scope + rollback plan.
+
+## Deliverables (what you can forward internally)
+
+- Executive summary + top 3 ROI wins
+- Skimmable triage table
+- Detailed findings with clickable evidence
+- Fix-now snippets + 7-day and 30-day plans
+- Questions list (what I need answered to close the loop)

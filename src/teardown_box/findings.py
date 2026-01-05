@@ -33,6 +33,9 @@ class Finding:
     confidence: str  # High/Medium/Low
     effort: str = "Medium"        # Low/Medium/High
     blast_radius: str = "Medium"  # Low/Medium/High
+    validate_safely: Optional[str] = None
+    success_metric: Optional[str] = None
+    rollback: Optional[str] = None
     evidence: List[EvidenceRef] = field(default_factory=list)
     fix_now: Optional[FixNow] = None
     plan_7d: List[str] = field(default_factory=list)

@@ -15,6 +15,7 @@ dist/
 *.egg-info/
 .eggs/
 pip-wheel-metadata/
+*.whl
 
 # Tooling caches
 .pytest_cache/
@@ -22,15 +23,16 @@ pip-wheel-metadata/
 .ruff_cache/
 .coverage
 htmlcov/
+.tox/
 
-# OS / editor junk
+# OS / editor
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
 
 # --- Project outputs ---
-# If you generate reports locally, you can ignore them (optional):
+# If you generate reports locally and don't want them committed, uncomment:
 # docs/*.html
 # docs/*.md
 

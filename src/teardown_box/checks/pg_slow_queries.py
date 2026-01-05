@@ -52,7 +52,7 @@ class PostgresSlowQueriesCheck:
 
         fix_cmds: List[str] = [
             "# For each top query, run EXPLAIN (ANALYZE, BUFFERS) in a safe environment",
-            "# Confirm indexes with \\d+ <table> and actual query patterns (params, ordering)",
+            r"# Confirm indexes with \d+ <table> and actual query patterns (params, ordering)",
         ]
 
         hints: List[str] = []
