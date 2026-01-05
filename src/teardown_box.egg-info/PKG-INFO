@@ -1,0 +1,6 @@
+Metadata-Version: 2.4
+Name: teardown-box
+Version: 0.1.0
+Summary: Teardown-in-a-Box: generate a client-ready teardown report from fixtures.
+Author: Buzzy Planet
+Requires-Python: >=3.10

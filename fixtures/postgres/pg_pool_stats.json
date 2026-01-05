@@ -1,0 +1,11 @@
+{
+  "pooler": "pgbouncer",
+  "db": "app",
+  "max_client_conn": 5000,
+  "default_pool_size": 50,
+  "current_clients": 4860,
+  "current_waiting": 322,
+  "avg_wait_ms": 185,
+  "peak_wait_ms": 2400,
+  "notes": "Spikes observed during deploy window"
+}

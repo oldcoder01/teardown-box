@@ -1,0 +1,7 @@
+# Fake TLS scan summary
+TLSv1.0: enabled
+TLSv1.1: enabled
+TLSv1.2: enabled
+TLSv1.3: enabled
+HSTS: missing
+Cipher suites: includes some legacy CBC suites

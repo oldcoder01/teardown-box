@@ -1,0 +1,4 @@
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/nvme0n1p2  100G   87G   13G  87% /
+tmpfs            16G  1.2G   15G   8% /run
+/dev/nvme0n1p1  512M  256M  256M  50% /boot

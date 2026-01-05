@@ -1,0 +1,10 @@
+{
+  "instance_id": "i-0123456789abcdef0",
+  "instance_type": "m5.2xlarge",
+  "cpu_p95_percent": 12.4,
+  "cpu_p50_percent": 4.8,
+  "memory_p95_percent": 28.1,
+  "network_p95_mbps": 42.0,
+  "period_days": 30,
+  "notes": "Workload steady; no batch peaks detected"
+}

@@ -1,0 +1,11 @@
+● api.service - Example API Service
+     Loaded: loaded (/etc/systemd/system/api.service; enabled; vendor preset: enabled)
+     Active: activating (auto-restart) (Result: exit-code) since Mon 2026-01-05 07:41:22 PST; 3s ago
+    Process: 14321 ExecStart=/usr/local/bin/api (code=exited, status=1/FAILURE)
+   Main PID: 14321 (code=exited, status=1/FAILURE)
+        CPU: 2.312s
+
+Jan 05 07:41:22 host systemd[1]: api.service: Scheduled restart job, restart counter is at 27.
+Jan 05 07:41:22 host systemd[1]: Stopped Example API Service.
+Jan 05 07:41:22 host systemd[1]: Started Example API Service.
+Jan 05 07:41:22 host api[14321]: panic: failed to connect to database (timeout)
