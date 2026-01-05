@@ -1,31 +1,108 @@
 from __future__ import annotations
 
 import html
-from typing import List
-
-from teardown_box.findings import Finding
 
 
 def render_html_from_markdown(md: str, title: str) -> str:
-    # Dependency-free fallback: embed markdown as preformatted text.
-    # If you want a nicer HTML conversion, add a markdown library later.
-    escaped = html.escape(md)
+    try:
+        import markdown as mdlib  # pip install markdown
+
+        body = mdlib.markdown(
+            md,
+            extensions=[
+                "fenced_code",
+                "tables",
+                "toc",
+                "sane_lists",
+            ],
+            output_format="html5",
+        )
+    except Exception:
+        # Fallback if markdown isn't installed or conversion fails
+        body = f"<pre>{html.escape(md)}</pre>"
+
+    safe_title = html.escape(title)
+
     return f"""<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{html.escape(title)}</title>
+  <title>{safe_title}</title>
   <style>
-    body {{ font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 2rem; line-height: 1.5; }}
-    pre {{ background: #f6f8fa; padding: 1rem; overflow: auto; border-radius: 8px; }}
-    h1,h2,h3,h4 {{ margin-top: 1.25rem; }}
-    .note {{ color: #555; }}
+    :root {{
+      --bg: #ffffff;
+      --fg: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --codebg: #f6f8fa;
+      --link: #2563eb;
+    }}
+    body {{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.55;
+    }}
+    .wrap {{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem;
+    }}
+    a {{ color: var(--link); text-decoration: none; }}
+    a:hover {{ text-decoration: underline; }}
+    h1 {{ font-size: 2rem; margin: 0 0 1rem; }}
+    h2 {{ font-size: 1.5rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); }}
+    h3 {{ font-size: 1.15rem; margin-top: 1.5rem; }}
+    h4 {{ font-size: 1rem; margin-top: 1.25rem; }}
+    p {{ margin: 0.75rem 0; }}
+    ul {{ margin: 0.75rem 0 0.75rem 1.25rem; }}
+    li {{ margin: 0.25rem 0; }}
+    code {{
+      background: var(--codebg);
+      padding: 0.15rem 0.3rem;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.95em;
+    }}
+    pre {{
+      background: var(--codebg);
+      padding: 1rem;
+      border-radius: 10px;
+      overflow: auto;
+      border: 1px solid var(--border);
+    }}
+    pre code {{
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+      font-size: 0.9em;
+    }}
+    table {{
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1rem 0;
+      border: 1px solid var(--border);
+    }}
+    th, td {{
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }}
+    th {{ background: #f9fafb; }}
+    .note {{
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+    }}
   </style>
 </head>
 <body>
-  <p class="note">HTML mode is a dependency-free fallback that embeds the markdown output. For richer HTML, add a markdown renderer.</p>
-  <pre>{escaped}</pre>
+  <div class="wrap">
+    {body}
+  </div>
 </body>
 </html>
 """

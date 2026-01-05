@@ -5,391 +5,335 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Teardown Report (Sample)</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 2rem; line-height: 1.5; }
-    pre { background: #f6f8fa; padding: 1rem; overflow: auto; border-radius: 8px; }
-    h1,h2,h3,h4 { margin-top: 1.25rem; }
-    .note { color: #555; }
+    :root {
+      --bg: #ffffff;
+      --fg: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --codebg: #f6f8fa;
+      --link: #2563eb;
+    }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.55;
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem;
+    }
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    h1 { font-size: 2rem; margin: 0 0 1rem; }
+    h2 { font-size: 1.5rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    h3 { font-size: 1.15rem; margin-top: 1.5rem; }
+    h4 { font-size: 1rem; margin-top: 1.25rem; }
+    p { margin: 0.75rem 0; }
+    ul { margin: 0.75rem 0 0.75rem 1.25rem; }
+    li { margin: 0.25rem 0; }
+    code {
+      background: var(--codebg);
+      padding: 0.15rem 0.3rem;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.95em;
+    }
+    pre {
+      background: var(--codebg);
+      padding: 1rem;
+      border-radius: 10px;
+      overflow: auto;
+      border: 1px solid var(--border);
+    }
+    pre code {
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+      font-size: 0.9em;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1rem 0;
+      border: 1px solid var(--border);
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f9fafb; }
+    .note {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+    }
   </style>
 </head>
 <body>
-  <p class="note">HTML mode is a dependency-free fallback that embeds the markdown output. For richer HTML, add a markdown renderer.</p>
-  <pre># Teardown Report (Sample)
-
-_Generated: 2026-01-05T08:52:57-08:00_
-
-## Executive summary
-
-- Findings: 11 total
-- High: 5
-- Medium: 4
-- Low: 2
-
-## Findings
-
-### Security
-
-#### [High] Unexpected public listener detected on port 5432
-
-**Impact:** Public listeners expand the attack surface. Databases and caches should not be exposed to the internet without strong justification, network controls, and monitoring.
-
-**Confidence:** High
-
-**Evidence:**
-- fixtures/linux/ss_lntp.txt:L5-L5 (Bound to 0.0.0.0:5432)
-
-**Fix now:** Restrict bind address and enforce network controls
-
-```bash
-# If this is Postgres, prefer listen_addresses=&#x27;localhost&#x27; (or private subnet only)
+  <div class="wrap">
+    <h1 id="teardown-report-sample">Teardown Report (Sample)</h1>
+<p><em>Generated: 2026-01-05T09:33:34-08:00</em></p>
+<h2 id="executive-summary">Executive summary</h2>
+<ul>
+<li>Findings: 11 total</li>
+<li>High: 5</li>
+<li>Medium: 4</li>
+<li>Low: 2</li>
+</ul>
+<h2 id="findings">Findings</h2>
+<h3 id="security">Security</h3>
+<h4 id="high-unexpected-public-listener-detected-on-port-5432">[High] Unexpected public listener detected on port 5432</h4>
+<p><strong>Impact:</strong> Public listeners expand the attack surface. Databases and caches should not be exposed to the internet without strong justification, network controls, and monitoring.</p>
+<p><strong>Confidence:</strong> High</p>
+<p><strong>Evidence:</strong>
+- fixtures/linux/ss_lntp.txt:L5-L5 (Bound to 0.0.0.0:5432)</p>
+<p><strong>Fix now:</strong> Restrict bind address and enforce network controls</p>
+<pre><code class="language-bash"># If this is Postgres, prefer listen_addresses='localhost' (or private subnet only)
 # Verify cloud SG/firewall: deny inbound 5432 from 0.0.0.0/0
 sudo ufw status || true
 sudo ss -lntp | head -50
-```
-
-**7-day plan:**
+</code></pre>
+<p><strong>7-day plan:</strong>
 - Confirm which services should be public and document an explicit allowlist.
 - Restrict binds to localhost/private interfaces and enforce SG/firewall rules.
-- Add monitoring/alerting for new public listeners.
-
-**30-day plan:**
+- Add monitoring/alerting for new public listeners.</p>
+<p><strong>30-day plan:</strong>
 - Standardize hardening baselines (CIS-ish) for hosts and containers.
 - Add continuous drift detection (ports, firewall, SGs) as a scheduled check.
-- Adopt least-privilege network segmentation between app and data tiers.
-
-**Questions I need answered:**
+- Adopt least-privilege network segmentation between app and data tiers.</p>
+<p><strong>Questions I need answered:</strong>
 - Is port 5432 intentionally public (e.g., temporary debug, migration)?
 - What enforces network policy today (security groups, nftables, kubernetes, etc.)?
-- Do you have a documented threat model / compliance constraints?
-
-#### [Medium] Legacy TLS versions appear enabled (TLS 1.0/1.1)
-
-**Impact:** Older TLS versions weaken security posture and may violate compliance expectations. Most modern clients support TLS 1.2+.
-
-**Confidence:** Medium
-
-**Evidence:**
-- fixtures/edge/tls_scan.txt (TLSv1.0/TLSv1.1 enabled in scan summary)
-
-**Fix now:** Disable TLS 1.0/1.1 and standardize a modern policy
-
-```bash
-# Target: TLS 1.2 and 1.3 only (exact config depends on your edge stack).
+- Do you have a documented threat model / compliance constraints?</p>
+<h4 id="medium-legacy-tls-versions-appear-enabled-tls-1011">[Medium] Legacy TLS versions appear enabled (TLS 1.0/1.1)</h4>
+<p><strong>Impact:</strong> Older TLS versions weaken security posture and may violate compliance expectations. Most modern clients support TLS 1.2+.</p>
+<p><strong>Confidence:</strong> Medium</p>
+<p><strong>Evidence:</strong>
+- fixtures/edge/tls_scan.txt (TLSv1.0/TLSv1.1 enabled in scan summary)</p>
+<p><strong>Fix now:</strong> Disable TLS 1.0/1.1 and standardize a modern policy</p>
+<pre><code class="language-bash"># Target: TLS 1.2 and 1.3 only (exact config depends on your edge stack).
 ssl_protocols TLSv1.2 TLSv1.3;
 # Use a modern cipher suite policy appropriate to your environment.
-```
-
-**7-day plan:**
+</code></pre>
+<p><strong>7-day plan:</strong>
 - Confirm client compatibility requirements (legacy devices/browsers).
 - Disable TLS 1.0/1.1 and redeploy edge config.
-- Run a follow-up scan to confirm posture.
-
-**30-day plan:**
+- Run a follow-up scan to confirm posture.</p>
+<p><strong>30-day plan:</strong>
 - Automate TLS posture scans (scheduled) and alert on regressions.
 - Adopt managed TLS policies via CDN/WAF where feasible.
-- Track certificate renewal and config drift.
-
-**Questions I need answered:**
+- Track certificate renewal and config drift.</p>
+<p><strong>Questions I need answered:</strong>
 - Do you terminate TLS at a CDN/WAF or on the origin?
 - Any compliance requirements (PCI/HIPAA/SOC2) driving a specific policy?
-- Any legacy clients that truly require TLS 1.0/1.1?
-
-#### [Low] HSTS is missing
-
-**Impact:** Without HSTS, clients can be tricked into initial HTTP connections in some downgrade scenarios. HSTS is usually a low-risk hardening win for public HTTPS sites.
-
-**Confidence:** Medium
-
-**Evidence:**
-- fixtures/edge/tls_scan.txt (HSTS marked missing in scan summary)
-
-**Fix now:** Add an HSTS header after validating HTTPS-only readiness
-
-```bash
-add_header Strict-Transport-Security &quot;max-age=31536000; includeSubDomains&quot; always;
+- Any legacy clients that truly require TLS 1.0/1.1?</p>
+<h4 id="low-hsts-is-missing">[Low] HSTS is missing</h4>
+<p><strong>Impact:</strong> Without HSTS, clients can be tricked into initial HTTP connections in some downgrade scenarios. HSTS is usually a low-risk hardening win for public HTTPS sites.</p>
+<p><strong>Confidence:</strong> Medium</p>
+<p><strong>Evidence:</strong>
+- fixtures/edge/tls_scan.txt (HSTS marked missing in scan summary)</p>
+<p><strong>Fix now:</strong> Add an HSTS header after validating HTTPS-only readiness</p>
+<pre><code class="language-bash">add_header Strict-Transport-Security &quot;max-age=31536000; includeSubDomains&quot; always;
 # Consider preload only after careful validation.
-```
-
-**7-day plan:**
+</code></pre>
+<p><strong>7-day plan:</strong>
 - Confirm all subdomains are HTTPS and redirects are correct.
-- Deploy HSTS and validate no mixed-content regressions.
-
-**30-day plan:**
+- Deploy HSTS and validate no mixed-content regressions.</p>
+<p><strong>30-day plan:</strong>
 - Add a baseline set of security headers (CSP, X-Content-Type-Options, etc.).
-- Automate header checks in CI.
-
-**Questions I need answered:**
+- Automate header checks in CI.</p>
+<p><strong>Questions I need answered:</strong>
 - Are there any HTTP-only subdomains/endpoints still in use?
-- Do you already use a CDN/WAF that can set headers globally?
-
-
-### Reliability
-
-#### [High] Connection pool appears saturated (high client usage / waiting queue)
-
-**Impact:** When the pool saturates, requests queue and tail latency spikes. This often presents as timeouts and cascading retries, which further increases load.
-
-**Confidence:** Medium
-
-**Evidence:**
-- fixtures/postgres/pg_pool_stats.json (clients=4860/5000, waiting=322, avg_wait_ms=185.0)
-
-**Fix now:** Reduce pool pressure and protect the DB from connection storms
-
-```bash
-# Align app pool sizes to DB capacity and reduce per-instance pools if needed.
+- Do you already use a CDN/WAF that can set headers globally?</p>
+<h3 id="reliability">Reliability</h3>
+<h4 id="high-connection-pool-appears-saturated-high-client-usage-waiting-queue">[High] Connection pool appears saturated (high client usage / waiting queue)</h4>
+<p><strong>Impact:</strong> When the pool saturates, requests queue and tail latency spikes. This often presents as timeouts and cascading retries, which further increases load.</p>
+<p><strong>Confidence:</strong> Medium</p>
+<p><strong>Evidence:</strong>
+- fixtures/postgres/pg_pool_stats.json (clients=4860/5000, waiting=322, avg_wait_ms=185.0)</p>
+<p><strong>Fix now:</strong> Reduce pool pressure and protect the DB from connection storms</p>
+<pre><code class="language-bash"># Align app pool sizes to DB capacity and reduce per-instance pools if needed.
 # Consider transaction pooling for short-lived queries (if compatible).
 psql -c &quot;SHOW max_connections;&quot;
 psql -c &quot;SELECT state, count(*) FROM pg_stat_activity GROUP BY state;&quot;
-```
-
-**7-day plan:**
+</code></pre>
+<p><strong>7-day plan:</strong>
 - Inventory all services connecting to Postgres and their pool sizes.
 - Set sane timeouts/backoff to prevent retry storms when DB is slow.
-- Correlate pool wait spikes with deploy windows, traffic, and slow queries.
-
-**30-day plan:**
+- Correlate pool wait spikes with deploy windows, traffic, and slow queries.</p>
+<p><strong>30-day plan:</strong>
 - Introduce admission control (rate limiting/load shedding) for hot endpoints.
 - Reduce transaction time via query/index fixes so connections return faster.
-- Automate capacity planning based on concurrency and transaction duration.
-
-**Questions I need answered:**
+- Automate capacity planning based on concurrency and transaction duration.</p>
+<p><strong>Questions I need answered:</strong>
 - How many app instances connect to the pooler at peak?
 - Are there deploy events that align with wait spikes (connection churn)?
-- Are long-running queries holding connections open?
-
-#### [High] systemd service appears to be flapping (restart loop)
-
-**Impact:** Restart loops create intermittent downtime, amplify load (retry storms), and usually mask a real dependency issue (DB, DNS, config, or secrets). They also consume CPU and can trigger cascading failures.
-
-**Confidence:** High
-
-**Evidence:**
-- fixtures/linux/systemctl_status.txt:L8-L8 (Restart counter is 27)
-
-**Fix now:** Pull recent logs and verify dependencies; add backoff while fixing root cause
-
-```bash
-sudo journalctl -u api.service --since &#x27;2 hours ago&#x27; | tail -200
+- Are long-running queries holding connections open?</p>
+<h4 id="high-systemd-service-appears-to-be-flapping-restart-loop">[High] systemd service appears to be flapping (restart loop)</h4>
+<p><strong>Impact:</strong> Restart loops create intermittent downtime, amplify load (retry storms), and usually mask a real dependency issue (DB, DNS, config, or secrets). They also consume CPU and can trigger cascading failures.</p>
+<p><strong>Confidence:</strong> High</p>
+<p><strong>Evidence:</strong>
+- fixtures/linux/systemctl_status.txt:L8-L8 (Restart counter is 27)</p>
+<p><strong>Fix now:</strong> Pull recent logs and verify dependencies; add backoff while fixing root cause</p>
+<pre><code class="language-bash">sudo journalctl -u api.service --since '2 hours ago' | tail -200
 sudo systemctl show api.service -p Restart -p RestartUSec -p StartLimitBurst -p StartLimitIntervalUSec
 sudo systemctl status api.service
-```
-
-**7-day plan:**
+</code></pre>
+<p><strong>7-day plan:</strong>
 - Identify the failing dependency (DB connectivity, DNS, secrets, config) and fix root cause.
 - Add health checks and a reasonable restart policy (backoff + limits) to avoid retry storms.
-- Add alerting on restart rate and error budget burn.
-
-**30-day plan:**
+- Add alerting on restart rate and error budget burn.</p>
+<p><strong>30-day plan:</strong>
 - Add graceful degradation (circuit breaker/backoff) in the app for dependency failures.
 - Add dependency SLOs (DB latency, DNS) and correlate with deploy events.
-- Standardize systemd unit templates and logging across services.
-
-**Questions I need answered:**
+- Standardize systemd unit templates and logging across services.</p>
+<p><strong>Questions I need answered:</strong>
 - Is this happening constantly or only during deploy windows?
 - What database/network path does the service use (VPC, SG, local socket)?
-- Do you have an incident timeline for when this started?
-
-#### [Medium] Autovacuum pressure likely on (public.orders, public.events, public.sessions) with high dead tuple ratios
-
-**Impact:** High dead tuples increase bloat and slow queries (more pages to scan, worse cache locality). If vacuum can&#x27;t keep up, performance degrades and storage costs rise.
-
-**Confidence:** Medium
-
-**Evidence:**
-- fixtures/postgres/pg_stat_user_tables.csv (Tables with high n_dead_tup relative to n_live_tup)
-
-**Fix now:** Inspect worst tables and tune vacuum/analyze thresholds where needed
-
-```bash
-psql -c &quot;SELECT relname, n_live_tup, n_dead_tup, last_autovacuum FROM pg_stat_user_tables ORDER BY n_dead_tup DESC LIMIT 20;&quot;
+- Do you have an incident timeline for when this started?</p>
+<h4 id="medium-autovacuum-pressure-likely-on-publicorders-publicevents-publicsessions-with-high-dead-tuple-ratios">[Medium] Autovacuum pressure likely on (public.orders, public.events, public.sessions) with high dead tuple ratios</h4>
+<p><strong>Impact:</strong> High dead tuples increase bloat and slow queries (more pages to scan, worse cache locality). If vacuum can't keep up, performance degrades and storage costs rise.</p>
+<p><strong>Confidence:</strong> Medium</p>
+<p><strong>Evidence:</strong>
+- fixtures/postgres/pg_stat_user_tables.csv (Tables with high n_dead_tup relative to n_live_tup)</p>
+<p><strong>Fix now:</strong> Inspect worst tables and tune vacuum/analyze thresholds where needed</p>
+<pre><code class="language-bash">psql -c &quot;SELECT relname, n_live_tup, n_dead_tup, last_autovacuum FROM pg_stat_user_tables ORDER BY n_dead_tup DESC LIMIT 20;&quot;
 # Consider per-table tuning on hot churn tables:
 # autovacuum_vacuum_scale_factor, autovacuum_vacuum_threshold, # autovacuum_analyze_scale_factor, autovacuum_analyze_threshold
 # Also check for long-running transactions preventing cleanup.
-```
-
-**7-day plan:**
+</code></pre>
+<p><strong>7-day plan:</strong>
 - Identify top bloat contributors and confirm vacuum is running as expected.
 - Adjust autovac settings for the highest-churn tables (sessions/events/orders).
-- Add alerting for dead tuple ratio and vacuum lag.
-
-**30-day plan:**
+- Add alerting for dead tuple ratio and vacuum lag.</p>
+<p><strong>30-day plan:</strong>
 - Schedule periodic bloat checks and reindex strategy where appropriate.
 - Review retention policies (e.g., session cleanup) to reduce churn.
-- Add runbooks for vacuum/reindex and long-transaction mitigation.
-
-**Questions I need answered:**
+- Add runbooks for vacuum/reindex and long-transaction mitigation.</p>
+<p><strong>Questions I need answered:</strong>
 - Any long-running transactions or idle-in-transaction sessions during peaks?
 - Are you using managed defaults (RDS/Aurora) or custom autovac settings?
-- Do you have strict maintenance window constraints?
-
-#### [Medium] Disk usage is high (87%) on at least one filesystem
-
-**Impact:** High disk usage is a common outage trigger (writes fail, services crash, databases stall). It also hides other problems (logs grow until the host falls over).
-
-**Confidence:** High
-
-**Evidence:**
-- fixtures/linux/df_h.txt:L2-L2 (Filesystem above threshold: /dev/nvme0n1p2  100G   87G   13G  87% /)
-
-**Fix now:** Identify top disk consumers and cap runaway logs safely
-
-```bash
-sudo du -xh /var/log | sort -h | tail -50
+- Do you have strict maintenance window constraints?</p>
+<h4 id="medium-disk-usage-is-high-87-on-at-least-one-filesystem">[Medium] Disk usage is high (87%) on at least one filesystem</h4>
+<p><strong>Impact:</strong> High disk usage is a common outage trigger (writes fail, services crash, databases stall). It also hides other problems (logs grow until the host falls over).</p>
+<p><strong>Confidence:</strong> High</p>
+<p><strong>Evidence:</strong>
+- fixtures/linux/df_h.txt:L2-L2 (Filesystem above threshold: /dev/nvme0n1p2  100G   87G   13G  87% /)</p>
+<p><strong>Fix now:</strong> Identify top disk consumers and cap runaway logs safely</p>
+<pre><code class="language-bash">sudo du -xh /var/log | sort -h | tail -50
 sudo journalctl --disk-usage
-sudo sed -i &#x27;s/^#SystemMaxUse=.*/SystemMaxUse=1G/&#x27; /etc/systemd/journald.conf || true
+sudo sed -i 's/^#SystemMaxUse=.*/SystemMaxUse=1G/' /etc/systemd/journald.conf || true
 sudo systemctl restart systemd-journald || true
-```
-
-**7-day plan:**
+</code></pre>
+<p><strong>7-day plan:</strong>
 - Confirm alerting on disk % and inode usage (thresholds + paging policy).
 - Implement log rotation policy for app logs and set journald caps.
-- Add a runbook: safe cleanup + where growth typically comes from.
-
-**30-day plan:**
+- Add a runbook: safe cleanup + where growth typically comes from.</p>
+<p><strong>30-day plan:</strong>
 - Add SLO-driven alerting and capacity planning (trend disk growth).
 - Standardize log retention per environment (dev/stage/prod).
-- Automate checks in CI or daily cron to catch regressions.
-
-**Questions I need answered:**
+- Automate checks in CI or daily cron to catch regressions.</p>
+<p><strong>Questions I need answered:</strong>
 - Is this host stateful (DB) or stateless (app)? Cleanup approach differs.
 - Any known log bursts (deploys, retries, noisy errors) causing growth?
-- What is your on-call policy for disk alerts (page vs ticket)?
-
-
-### Performance
-
-#### [High] High sequential scan activity on large tables (public.orders, public.events)
-
-**Impact:** Repeated sequential scans on large tables inflate latency and CPU, especially under concurrency. This is a common root cause of &#x27;DB is slow&#x27; incidents.
-
-**Confidence:** Medium
-
-**Evidence:**
-- fixtures/postgres/pg_stat_user_tables.csv (Tables with high reltuples and high seq_scan)
-
-**Fix now:** Identify query patterns causing seq_scans and add targeted indexes
-
-```bash
-# Map top seq_scans to query patterns (pg_stat_statements + logs)
+- What is your on-call policy for disk alerts (page vs ticket)?</p>
+<h3 id="performance">Performance</h3>
+<h4 id="high-high-sequential-scan-activity-on-large-tables-publicorders-publicevents">[High] High sequential scan activity on large tables (public.orders, public.events)</h4>
+<p><strong>Impact:</strong> Repeated sequential scans on large tables inflate latency and CPU, especially under concurrency. This is a common root cause of 'DB is slow' incidents.</p>
+<p><strong>Confidence:</strong> Medium</p>
+<p><strong>Evidence:</strong>
+- fixtures/postgres/pg_stat_user_tables.csv (Tables with high reltuples and high seq_scan)</p>
+<p><strong>Fix now:</strong> Identify query patterns causing seq_scans and add targeted indexes</p>
+<pre><code class="language-bash"># Map top seq_scans to query patterns (pg_stat_statements + logs)
 # Run EXPLAIN (ANALYZE, BUFFERS) to confirm scan type and cost
 # Add the smallest viable index to support the common filter/order
 psql -c &quot;SELECT relname, seq_scan, idx_scan, n_live_tup, n_dead_tup FROM pg_stat_user_tables ORDER BY seq_scan DESC LIMIT 20;&quot;
-```
-
-**7-day plan:**
+</code></pre>
+<p><strong>7-day plan:</strong>
 - Map top seq_scanned tables to specific endpoints/jobs.
 - Implement 1–2 high-ROI fixes (index or query rewrite) and measure p95 before/after.
-- Ensure stats are current (ANALYZE) for affected tables.
-
-**30-day plan:**
+- Ensure stats are current (ANALYZE) for affected tables.</p>
+<p><strong>30-day plan:</strong>
 - Add performance dashboards/alerts (DB CPU, buffer hit rate, slow query spikes).
 - Review ORM/query patterns (wide SELECT *, missing filters) driving scans.
-- Consider partitioning for large time-series tables if growth continues.
-
-**Questions I need answered:**
+- Consider partitioning for large time-series tables if growth continues.</p>
+<p><strong>Questions I need answered:</strong>
 - Are these tables expected to be scan-heavy (analytics), or OLTP hot paths?
 - Do you have read replicas or a separate analytics store?
-- Any existing indexes that are unused or misaligned with query patterns?
-
-#### [High] Postgres shows heavy time spent in a small set of queries (pg_stat_statements)
-
-**Impact:** A handful of queries often dominate database load. Improving them typically reduces p95 latency, stabilizes CPU, and lowers infra cost by delaying scale-up.
-
-**Confidence:** Medium
-
-**Evidence:**
-- fixtures/postgres/pg_stat_statements.csv:L1-L4 (Top queries by total_time_ms (sample))
-
-**Fix now:** Validate query plans and implement the highest-impact index/query changes
-
-```bash
-# For each top query, run EXPLAIN (ANALYZE, BUFFERS) in a safe environment
+- Any existing indexes that are unused or misaligned with query patterns?</p>
+<h4 id="high-postgres-shows-heavy-time-spent-in-a-small-set-of-queries-pg_stat_statements">[High] Postgres shows heavy time spent in a small set of queries (pg_stat_statements)</h4>
+<p><strong>Impact:</strong> A handful of queries often dominate database load. Improving them typically reduces p95 latency, stabilizes CPU, and lowers infra cost by delaying scale-up.</p>
+<p><strong>Confidence:</strong> Medium</p>
+<p><strong>Evidence:</strong>
+- fixtures/postgres/pg_stat_statements.csv:L1-L4 (Top queries by total_time_ms (sample))</p>
+<p><strong>Fix now:</strong> Validate query plans and implement the highest-impact index/query changes</p>
+<pre><code class="language-bash"># For each top query, run EXPLAIN (ANALYZE, BUFFERS) in a safe environment
 # Confirm indexes with \d+ &lt;table&gt; and actual query patterns (params, ordering)
 # Candidate index statements (validate with EXPLAIN + production constraints):
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email ON public.users (email);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_orders_created_at ON public.orders (created_at DESC);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_sessions_token ON public.sessions (session_token);
-```
-
-**7-day plan:**
+</code></pre>
+<p><strong>7-day plan:</strong>
 - Confirm pg_stat_statements is enabled and capturing representative traffic.
 - Run EXPLAIN (ANALYZE, BUFFERS) for top queries and identify scans/sorts/hot joins.
-- Implement 1–2 highest-ROI fixes (index or query rewrite) with safe rollout.
-
-**30-day plan:**
+- Implement 1–2 highest-ROI fixes (index or query rewrite) with safe rollout.</p>
+<p><strong>30-day plan:</strong>
 - Add performance regression tests (key endpoints) and track DB p95 + CPU.
 - Introduce SLO/alerts for slow query spikes and lock contention.
-- Consider connection pooling tuning to reduce per-query overhead.
-
-**Questions I need answered:**
+- Consider connection pooling tuning to reduce per-query overhead.</p>
+<p><strong>Questions I need answered:</strong>
 - Are these queries representative of peak traffic (same workload + time window)?
 - Any hard constraints on index build time / lock tolerance?
-- Is read/write split or partitioning on the roadmap?
-
-
-### Cost
-
-#### [Medium] Possible overprovisioning signal: m5.2xlarge at low p95 utilization
-
-**Impact:** If sustained utilization is low, you may be paying for capacity you don’t need. Rightsizing can reduce spend without reducing reliability (when validated carefully).
-
-**Confidence:** Low
-
-**Evidence:**
-- fixtures/cost/utilization_summary.json (instance=i-0123456789abcdef0, cpu_p95=12.4%, mem_p95=28.1% over 30 days)
-
-**Fix now:** Create a rightsizing candidate and validate against peak/burst patterns
-
-```bash
-# Validate with a larger window and include disk + network + burst behavior
+- Is read/write split or partitioning on the roadmap?</p>
+<h3 id="cost">Cost</h3>
+<h4 id="medium-possible-overprovisioning-signal-m52xlarge-at-low-p95-utilization">[Medium] Possible overprovisioning signal: m5.2xlarge at low p95 utilization</h4>
+<p><strong>Impact:</strong> If sustained utilization is low, you may be paying for capacity you don’t need. Rightsizing can reduce spend without reducing reliability (when validated carefully).</p>
+<p><strong>Confidence:</strong> Low</p>
+<p><strong>Evidence:</strong>
+- fixtures/cost/utilization_summary.json (instance=i-0123456789abcdef0, cpu_p95=12.4%, mem_p95=28.1% over 30 days)</p>
+<p><strong>Fix now:</strong> Create a rightsizing candidate and validate against peak/burst patterns</p>
+<pre><code class="language-bash"># Validate with a larger window and include disk + network + burst behavior
 # If safe, test downsize one step in a canary environment first
 aws cloudwatch get-metric-statistics ...  # (example: CPUUtilization p95/p99)
-```
-
-**7-day plan:**
+</code></pre>
+<p><strong>7-day plan:</strong>
 - Pull 30–90d utilization including peak events and deploy windows.
 - Identify a safe canary target for downsize and test rollback.
-- Estimate savings and risk; execute one change with monitoring.
-
-**30-day plan:**
+- Estimate savings and risk; execute one change with monitoring.</p>
+<p><strong>30-day plan:</strong>
 - Adopt scheduled scaling or autoscaling where appropriate.
 - Track unit cost per request/job and alert on regressions.
-- Automate monthly cost posture checks and recommendations.
-
-**Questions I need answered:**
+- Automate monthly cost posture checks and recommendations.</p>
+<p><strong>Questions I need answered:</strong>
 - Are there known weekly/monthly peaks not represented in this sample?
 - Any CPU credit/burstable instances involved?
-- What is your rollback plan if latency increases after downsize?
-
-#### [Low] EBS gp2 volumes detected; consider gp3 for cost/performance control
-
-**Impact:** gp3 often provides better baseline performance and more predictable tuning. Switching from gp2 to gp3 can reduce cost and decouple size from performance.
-
-**Confidence:** Medium
-
-**Evidence:**
-- fixtures/cost/ebs_volumes.csv (gp2 volumes: vol-0aaa111)
-
-**Fix now:** Evaluate gp3 migration plan (low-risk, validate per workload)
-
-```bash
-# In AWS: modify volume type to gp3 and set IOPS/throughput as needed
+- What is your rollback plan if latency increases after downsize?</p>
+<h4 id="low-ebs-gp2-volumes-detected-consider-gp3-for-costperformance-control">[Low] EBS gp2 volumes detected; consider gp3 for cost/performance control</h4>
+<p><strong>Impact:</strong> gp3 often provides better baseline performance and more predictable tuning. Switching from gp2 to gp3 can reduce cost and decouple size from performance.</p>
+<p><strong>Confidence:</strong> Medium</p>
+<p><strong>Evidence:</strong>
+- fixtures/cost/ebs_volumes.csv (gp2 volumes: vol-0aaa111)</p>
+<p><strong>Fix now:</strong> Evaluate gp3 migration plan (low-risk, validate per workload)</p>
+<pre><code class="language-bash"># In AWS: modify volume type to gp3 and set IOPS/throughput as needed
 # Validate latency/IOPS requirements before and after
 aws ec2 modify-volume --volume-id &lt;vol-id&gt; --volume-type gp3 --iops 3000 --throughput 125
-```
-
-**7-day plan:**
+</code></pre>
+<p><strong>7-day plan:</strong>
 - Inventory gp2 volumes and identify those safe to migrate first.
 - Migrate a non-critical volume and confirm workload metrics.
-- Roll out remaining migrations with a change window + monitoring.
-
-**30-day plan:**
+- Roll out remaining migrations with a change window + monitoring.</p>
+<p><strong>30-day plan:</strong>
 - Standardize volume types/policies in IaC (default to gp3).
-- Add cost posture checks for storage, snapshots, and idle resources.
-
-**Questions I need answered:**
+- Add cost posture checks for storage, snapshots, and idle resources.</p>
+<p><strong>Questions I need answered:</strong>
 - Are there workloads with unusually high IOPS/throughput requirements?
-- Do you have maintenance windows for volume modifications?
-</pre>
+- Do you have maintenance windows for volume modifications?</p>
+  </div>
 </body>
 </html>
