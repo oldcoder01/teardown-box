@@ -6,9 +6,9 @@
 **What you get:** A report like this + a short call to confirm priorities + a fix-now shortlist.
 **Who it's for:** Small SaaS / agencies / teams with recurring incidents, slow Postgres, and unclear next steps.
 
-**Next step:** [Book 15 minutes](https://calendly.com/jason-kelly-001) — info@buzzyplanet.com
+**Next step:** [Book 15 minutes](https://calendly.com/jason-kelly-001/introcall) — info@buzzyplanet.com
 
-_Generated: 2026-01-05T12:32:05-08:00_
+_Generated: 2026-01-05T12:56:44-08:00_
 
 ## Executive summary
 
