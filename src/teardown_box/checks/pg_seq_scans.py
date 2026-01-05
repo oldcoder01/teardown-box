@@ -61,7 +61,7 @@ class PostgresSeqScansCheck:
                 ),
                 plan_7d=[
                     "Map top seq_scanned tables to specific endpoints/jobs.",
-                    "Implement 1–2 high-ROI fixes (index or query rewrite) and measure p95 before/after.",
+                    "Implement 1-2 high-ROI fixes (index or query rewrite) and measure p95 before/after.",
                     "Ensure stats are current (ANALYZE) for affected tables.",
                 ],
                 plan_30d=[

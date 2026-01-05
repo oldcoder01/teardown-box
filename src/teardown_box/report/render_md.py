@@ -1,29 +1,40 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 from teardown_box.findings import Finding, finding_sort_key
 from teardown_box.severity import SEVERITIES
+from teardown_box.report.boilerplate import ASSUMPTIONS_MD, VERIFY_PLAN_MD
 
 
 def _sev_label(key: str) -> str:
     sev = SEVERITIES.get(key)
-    if sev is None:
-        return key
-    return sev.label
+    return sev.label if sev is not None else key
 
 
-def render_markdown(findings: List[Finding], title: str, generated_at_iso: str) -> str:
+def _sev_rank(key: str) -> int:
+    sev = SEVERITIES.get(key)
+    return sev.sort if sev is not None else 99
+
+
+def render_markdown(
+    findings: List[Finding],
+    title: str,
+    generated_at_iso: str,
+    inputs_reviewed: List[str],
+) -> str:
     findings_sorted = sorted(findings, key=finding_sort_key)
 
-    # Summary counts
     counts: Dict[str, int] = defaultdict(int)
     for f in findings_sorted:
         counts[f.severity] += 1
 
-    # Group by category
+    # Top wins: highest severity first; prefer items with Fix Now
+    fixables = [f for f in findings_sorted if f.fix_now is not None]
+    fixables = sorted(fixables, key=lambda f: (_sev_rank(f.severity), f.category, f.title.lower()))
+    top_wins = fixables[:3]
+
     by_cat: Dict[str, List[Finding]] = defaultdict(list)
     for f in findings_sorted:
         by_cat[f.category].append(f)
@@ -40,6 +51,33 @@ def render_markdown(findings: List[Finding], title: str, generated_at_iso: str) 
         if counts.get(key, 0) > 0:
             lines.append(f"- {_sev_label(key)}: {counts[key]}")
     lines.append("")
+
+    if inputs_reviewed:
+        lines.append("## Inputs reviewed (scope)")
+        lines.append("")
+        lines.append("This report is generated from the following snapshot artifacts (synthetic fixtures in this demo).")
+        lines.append("")
+        for p in inputs_reviewed:
+            lines.append(f"- `{p}`")
+        lines.append("")
+
+    if top_wins:
+        lines.append("## Top 3 fix-now wins (highest ROI)")
+        lines.append("")
+        for f in top_wins:
+            effort = getattr(f, "effort", "Medium")
+            blast = getattr(f, "blast_radius", "Medium")
+            lines.append(
+                f"- **[{_sev_label(f.severity)}] {f.title}** "
+                f"(Effort: {effort}, Blast radius: {blast}) — Fix now: *{f.fix_now.title}*"
+            )
+        lines.append("")
+
+    lines.append(ASSUMPTIONS_MD.strip())
+    lines.append("")
+    lines.append(VERIFY_PLAN_MD.strip())
+    lines.append("")
+
     lines.append("## Findings")
     lines.append("")
 
@@ -50,24 +88,30 @@ def render_markdown(findings: List[Finding], title: str, generated_at_iso: str) 
         lines.append(f"### {cat}")
         lines.append("")
         for f in items:
+            effort = getattr(f, "effort", "Medium")
+            blast = getattr(f, "blast_radius", "Medium")
+
             lines.append(f"#### [{_sev_label(f.severity)}] {f.title}")
             lines.append("")
             lines.append(f"**Impact:** {f.impact}")
             lines.append("")
             lines.append(f"**Confidence:** {f.confidence}")
             lines.append("")
+            lines.append(f"**Effort / Blast radius:** {effort} / {blast}")
+            lines.append("")
+
             if f.evidence:
                 lines.append("**Evidence:**")
                 for ev in f.evidence:
                     lines.append(f"- {ev.format()}")
                 lines.append("")
+
             if f.fix_now is not None:
                 lines.append(f"**Fix now:** {f.fix_now.title}")
                 lines.append("")
                 if f.fix_now.commands:
                     lines.append("```bash")
-                    for c in f.fix_now.commands:
-                        lines.append(c)
+                    lines.extend(f.fix_now.commands)
                     lines.append("```")
                     lines.append("")
                 if f.fix_now.snippet:
@@ -75,21 +119,25 @@ def render_markdown(findings: List[Finding], title: str, generated_at_iso: str) 
                     lines.append(f.fix_now.snippet)
                     lines.append("```")
                     lines.append("")
+
             if f.plan_7d:
                 lines.append("**7-day plan:**")
                 for p in f.plan_7d:
                     lines.append(f"- {p}")
                 lines.append("")
+
             if f.plan_30d:
                 lines.append("**30-day plan:**")
                 for p in f.plan_30d:
                     lines.append(f"- {p}")
                 lines.append("")
+
             if f.questions:
                 lines.append("**Questions I need answered:**")
                 for q in f.questions:
                     lines.append(f"- {q}")
                 lines.append("")
+
         lines.append("")
 
     return "\n".join(lines).rstrip() + "\n"

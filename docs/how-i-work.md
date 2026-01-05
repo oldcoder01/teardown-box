@@ -15,14 +15,14 @@ This is the same playbook I use on real systems. The CLI demo is a portable vers
 ## Day 1 (triage + quick wins)
 - Normalize evidence and establish a baseline.
 - Identify top risks by severity + impact.
-- Deliver “Fix now” items that are safe and reversible.
+- Deliver "Fix now" items that are safe and reversible.
 - Draft a 7-day stabilization plan.
 
 ## Day 2 (report + plan)
 - Produce a client-ready report:
   - Findings grouped by category with evidence references
   - Severity + impact explained in plain English
-  - Safe “Fix now” commands/snippets
+  - Safe "Fix now" commands/snippets
   - 7-day plan (stabilize) + 30-day plan (hardening)
   - Questions I need answered to validate assumptions
 - Walk the report live and agree on an implementation plan.

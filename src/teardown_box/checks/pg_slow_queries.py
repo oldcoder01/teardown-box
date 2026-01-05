@@ -84,7 +84,7 @@ class PostgresSlowQueriesCheck:
                 plan_7d=[
                     "Confirm pg_stat_statements is enabled and capturing representative traffic.",
                     "Run EXPLAIN (ANALYZE, BUFFERS) for top queries and identify scans/sorts/hot joins.",
-                    "Implement 1–2 highest-ROI fixes (index or query rewrite) with safe rollout.",
+                    "Implement 1-2 highest-ROI fixes (index or query rewrite) with safe rollout.",
                 ],
                 plan_30d=[
                     "Add performance regression tests (key endpoints) and track DB p95 + CPU.",

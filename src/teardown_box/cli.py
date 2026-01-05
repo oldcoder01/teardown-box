@@ -30,7 +30,13 @@ def main(argv: list[str] | None = None) -> int:
         out_dir.mkdir(parents=True, exist_ok=True)
 
         generated_at = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
-        md = render_markdown(res.findings, title=args.title, generated_at_iso=generated_at)
+        md = render_markdown(
+            res.findings,
+            title=args.title,
+            generated_at_iso=generated_at,
+            inputs_reviewed=res.inputs_reviewed,
+        )
+
 
         md_path = out_dir / "sample-report.md"
         md_path.write_text(md, encoding="utf-8")

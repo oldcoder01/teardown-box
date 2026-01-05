@@ -1,6 +1,6 @@
 # Teardown Report (Sample)
 
-_Generated: 2026-01-05T09:33:34-08:00_
+_Generated: 2026-01-05T09:57:32-08:00_
 
 ## Executive summary
 
@@ -8,6 +8,77 @@ _Generated: 2026-01-05T09:33:34-08:00_
 - High: 5
 - Medium: 4
 - Low: 2
+
+## Inputs reviewed (scope)
+
+This report is generated from the following snapshot artifacts (synthetic fixtures in this demo).
+
+- `cost/ebs_volumes.csv`
+- `cost/utilization_summary.json`
+- `edge/nginx.conf`
+- `edge/tls_scan.txt`
+- `infra/terraform_plan.txt`
+- `linux/df_h.txt`
+- `linux/ss_lntp.txt`
+- `linux/systemctl_status.txt`
+- `postgres/pg_pool_stats.json`
+- `postgres/pg_stat_statements.csv`
+- `postgres/pg_stat_user_tables.csv`
+
+## Top 3 fix-now wins (highest ROI)
+
+- **[High] High sequential scan activity on large tables (public.orders, public.events)** (Effort: Medium, Blast radius: Medium) — Fix now: *Identify query patterns causing seq_scans and add targeted indexes*
+- **[High] Postgres shows heavy time spent in a small set of queries (pg_stat_statements)** (Effort: Medium, Blast radius: Medium) — Fix now: *Validate query plans and implement the highest-impact index/query changes*
+- **[High] Connection pool appears saturated (high client usage / waiting queue)** (Effort: Medium, Blast radius: Medium) — Fix now: *Reduce pool pressure and protect the DB from connection storms*
+
+## Assumptions & limits (what this report is / isn't)
+
+This report is based on a point-in-time snapshot of the artifacts listed in **Inputs reviewed**.
+It intentionally avoids invasive actions. Findings are prioritized by *severity x impact x confidence*.
+
+**Assumptions**
+- The snapshot is representative of normal and peak behavior (or at least of a recent incident window).
+- The environment is a typical internet-facing web app with a Postgres-backed data tier.
+- "Fix now" commands are intended to be safe and reversible, but should be validated in your environment.
+
+**Limits**
+- No live access was used for this demo; real environments require verification (config drift, active traffic, dependencies).
+- Cost signals are directional (rightsizing recommendations require longer windows and peak analysis).
+- Some findings depend on business context (SLOs, traffic patterns, compliance requirements).
+
+**Decision rules used**
+- *High severity* = likely to cause outage or material security exposure.
+- *High impact* = affects user-facing latency/availability or increases breach surface.
+- *Confidence* reflects evidence strength from artifacts (not "gut feel").
+
+## What I would verify with real access (48-hour verification plan)
+
+This is the short list of checks I run to turn snapshot findings into "we're sure" conclusions.
+
+**Security**
+- Confirm firewall/SG reality vs host listeners (what is actually reachable from the internet).
+- Validate TLS termination point (CDN/WAF vs origin) and confirm enforced TLS versions/ciphers.
+- Review IAM/service principals for least-privilege (read/write boundaries, credential rotation).
+
+**Reliability**
+- Confirm restart-loop root cause via logs + dependency checks (DB reachability, DNS, secrets/config).
+- Validate disk growth source (log volume, retention policy, and whether growth is correlated to incidents/deploys).
+- Verify alerting: paging thresholds, on-call policy, and whether alerts are actionable.
+
+**Performance**
+- Run EXPLAIN (ANALYZE, BUFFERS) on top queries with representative parameters.
+- Identify whether seq scans are driven by hot endpoints, background jobs, or analytics queries.
+- Check lock contention and connection churn (pg_stat_activity, pooler stats, deploy windows).
+
+**Cost**
+- Pull 30-90 days utilization and include peak events; validate headroom requirements.
+- Confirm storage policy: gp2/gp3 usage, snapshot retention, orphaned volumes.
+- Tie spend to workload (unit cost per request/job) to avoid "savings that break SLOs".
+
+**Exit criteria (what "done" looks like)**
+- Top risks have owners, rollback plans, and a validated implementation path.
+- We agree on SLOs (or at least p95/p99 targets) to define "improvement."
+- A 7-day stabilization plan + 30-day hardening plan is accepted by the team.
 
 ## Findings
 
@@ -18,6 +89,8 @@ _Generated: 2026-01-05T09:33:34-08:00_
 **Impact:** Public listeners expand the attack surface. Databases and caches should not be exposed to the internet without strong justification, network controls, and monitoring.
 
 **Confidence:** High
+
+**Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
 - fixtures/linux/ss_lntp.txt:L5-L5 (Bound to 0.0.0.0:5432)
@@ -52,6 +125,8 @@ sudo ss -lntp | head -50
 
 **Confidence:** Medium
 
+**Effort / Blast radius:** Medium / Medium
+
 **Evidence:**
 - fixtures/edge/tls_scan.txt (TLSv1.0/TLSv1.1 enabled in scan summary)
 
@@ -84,6 +159,8 @@ ssl_protocols TLSv1.2 TLSv1.3;
 
 **Confidence:** Medium
 
+**Effort / Blast radius:** Medium / Medium
+
 **Evidence:**
 - fixtures/edge/tls_scan.txt (HSTS marked missing in scan summary)
 
@@ -114,6 +191,8 @@ add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" alway
 **Impact:** When the pool saturates, requests queue and tail latency spikes. This often presents as timeouts and cascading retries, which further increases load.
 
 **Confidence:** Medium
+
+**Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
 - fixtures/postgres/pg_pool_stats.json (clients=4860/5000, waiting=322, avg_wait_ms=185.0)
@@ -148,6 +227,8 @@ psql -c "SELECT state, count(*) FROM pg_stat_activity GROUP BY state;"
 
 **Confidence:** High
 
+**Effort / Blast radius:** Medium / Medium
+
 **Evidence:**
 - fixtures/linux/systemctl_status.txt:L8-L8 (Restart counter is 27)
 
@@ -179,6 +260,8 @@ sudo systemctl status api.service
 **Impact:** High dead tuples increase bloat and slow queries (more pages to scan, worse cache locality). If vacuum can't keep up, performance degrades and storage costs rise.
 
 **Confidence:** Medium
+
+**Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
 - fixtures/postgres/pg_stat_user_tables.csv (Tables with high n_dead_tup relative to n_live_tup)
@@ -212,6 +295,8 @@ psql -c "SELECT relname, n_live_tup, n_dead_tup, last_autovacuum FROM pg_stat_us
 **Impact:** High disk usage is a common outage trigger (writes fail, services crash, databases stall). It also hides other problems (logs grow until the host falls over).
 
 **Confidence:** High
+
+**Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
 - fixtures/linux/df_h.txt:L2-L2 (Filesystem above threshold: /dev/nvme0n1p2  100G   87G   13G  87% /)
@@ -249,6 +334,8 @@ sudo systemctl restart systemd-journald || true
 
 **Confidence:** Medium
 
+**Effort / Blast radius:** Medium / Medium
+
 **Evidence:**
 - fixtures/postgres/pg_stat_user_tables.csv (Tables with high reltuples and high seq_scan)
 
@@ -263,7 +350,7 @@ psql -c "SELECT relname, seq_scan, idx_scan, n_live_tup, n_dead_tup FROM pg_stat
 
 **7-day plan:**
 - Map top seq_scanned tables to specific endpoints/jobs.
-- Implement 1–2 high-ROI fixes (index or query rewrite) and measure p95 before/after.
+- Implement 1-2 high-ROI fixes (index or query rewrite) and measure p95 before/after.
 - Ensure stats are current (ANALYZE) for affected tables.
 
 **30-day plan:**
@@ -282,6 +369,8 @@ psql -c "SELECT relname, seq_scan, idx_scan, n_live_tup, n_dead_tup FROM pg_stat
 
 **Confidence:** Medium
 
+**Effort / Blast radius:** Medium / Medium
+
 **Evidence:**
 - fixtures/postgres/pg_stat_statements.csv:L1-L4 (Top queries by total_time_ms (sample))
 
@@ -299,7 +388,7 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_sessions_token ON public.sessions (s
 **7-day plan:**
 - Confirm pg_stat_statements is enabled and capturing representative traffic.
 - Run EXPLAIN (ANALYZE, BUFFERS) for top queries and identify scans/sorts/hot joins.
-- Implement 1–2 highest-ROI fixes (index or query rewrite) with safe rollout.
+- Implement 1-2 highest-ROI fixes (index or query rewrite) with safe rollout.
 
 **30-day plan:**
 - Add performance regression tests (key endpoints) and track DB p95 + CPU.
@@ -316,9 +405,11 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_sessions_token ON public.sessions (s
 
 #### [Medium] Possible overprovisioning signal: m5.2xlarge at low p95 utilization
 
-**Impact:** If sustained utilization is low, you may be paying for capacity you don’t need. Rightsizing can reduce spend without reducing reliability (when validated carefully).
+**Impact:** If sustained utilization is low, you may be paying for capacity you don't need. Rightsizing can reduce spend without reducing reliability (when validated carefully).
 
 **Confidence:** Low
+
+**Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
 - fixtures/cost/utilization_summary.json (instance=i-0123456789abcdef0, cpu_p95=12.4%, mem_p95=28.1% over 30 days)
@@ -332,7 +423,7 @@ aws cloudwatch get-metric-statistics ...  # (example: CPUUtilization p95/p99)
 ```
 
 **7-day plan:**
-- Pull 30–90d utilization including peak events and deploy windows.
+- Pull 30-90d utilization including peak events and deploy windows.
 - Identify a safe canary target for downsize and test rollback.
 - Estimate savings and risk; execute one change with monitoring.
 
@@ -351,6 +442,8 @@ aws cloudwatch get-metric-statistics ...  # (example: CPUUtilization p95/p99)
 **Impact:** gp3 often provides better baseline performance and more predictable tuning. Switching from gp2 to gp3 can reduce cost and decouple size from performance.
 
 **Confidence:** Medium
+
+**Effort / Blast radius:** Medium / Medium
 
 **Evidence:**
 - fixtures/cost/ebs_volumes.csv (gp2 volumes: vol-0aaa111)

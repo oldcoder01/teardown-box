@@ -4,9 +4,9 @@ A small CLI that ingests sample data (fixtures) and produces a client-ready repo
 
 - Findings grouped by category (Security / Reliability / Performance / Cost)
 - Severity + impact + evidence references
-- “Fix now” commands/snippets
+- "Fix now" commands/snippets
 - A 7-day plan + 30-day plan
-- A “Questions I need answered” section
+- A "Questions I need answered" section
 
 ## Quickstart
 

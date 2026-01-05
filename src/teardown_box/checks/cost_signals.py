@@ -29,7 +29,7 @@ class CostSignalsCheck:
                         severity="medium",
                         title=f"Possible overprovisioning signal: {itype} at low p95 utilization",
                         impact=(
-                            "If sustained utilization is low, you may be paying for capacity you don’t need. "
+                            "If sustained utilization is low, you may be paying for capacity you don't need. "
                             "Rightsizing can reduce spend without reducing reliability (when validated carefully)."
                         ),
                         confidence="Low",
@@ -48,7 +48,7 @@ class CostSignalsCheck:
                             ],
                         ),
                         plan_7d=[
-                            "Pull 30–90d utilization including peak events and deploy windows.",
+                            "Pull 30-90d utilization including peak events and deploy windows.",
                             "Identify a safe canary target for downsize and test rollback.",
                             "Estimate savings and risk; execute one change with monitoring.",
                         ],

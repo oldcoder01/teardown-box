@@ -31,6 +31,8 @@ class Finding:
     title: str
     impact: str
     confidence: str  # High/Medium/Low
+    effort: str = "Medium"        # Low/Medium/High
+    blast_radius: str = "Medium"  # Low/Medium/High
     evidence: List[EvidenceRef] = field(default_factory=list)
     fix_now: Optional[FixNow] = None
     plan_7d: List[str] = field(default_factory=list)
