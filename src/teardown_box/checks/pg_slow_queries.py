@@ -70,7 +70,7 @@ class PostgresSlowQueriesCheck:
             Finding(
                 category="Performance",
                 severity="high",
-                title="Database shows heavy time spent in a small set of queries (statement stats)",
+                title="Postgres shows heavy time spent in a small set of queries (pg_stat_statements)",
                 impact=(
                     "A handful of queries often dominate database load. Improving them typically reduces p95 latency, "
                     "stabilizes CPU, and lowers infra cost by delaying scale-up."

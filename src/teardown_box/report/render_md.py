@@ -87,6 +87,13 @@ def _read_evidence_snippet(fixtures_root: str, ref: EvidenceRef, max_lines_no_ra
     return "\n".join(out2)
 
 
+def _as_mailto(s: str) -> str:
+    t = s.strip()
+    if t and "@" in t and " " not in t and not t.lower().startswith("mailto:"):
+        return f"mailto:{t}"
+    return t
+
+
 def render_markdown(
     findings: List[Finding],
     title: str,
@@ -95,9 +102,8 @@ def render_markdown(
     fixtures_root: Optional[str] = None,
     cta_label: str = "Book 15 minutes",
     cta_url: str = "#",
-    contact_label: str = "Request a QuickScan",
-    contact_url: str = "https://buzzyplanet.com/contact",
     contact_line: str = "Replace this with your email / Calendly link",
+    contact_url: str = "#",
 ) -> str:
     findings_sorted = sorted(findings, key=finding_sort_key)
 
@@ -138,24 +144,32 @@ def render_markdown(
     # ---- Front door: one-screen intro + CTA ----
     lines.append("## Performance & Debt QuickScan (3 business days, non-invasive)")
     lines.append("")
-    lines.append("A fast assessment that turns performance pain + technical debt into a prioritized, sprint-ready plan.")
+    lines.append("**What this is:** A fast, non-invasive assessment that turns “slow + messy” into a prioritized, sprint-ready plan.")
     lines.append("")
-    lines.append("**What you get:**")
-    lines.append("- Top findings ranked by **Impact / Effort / Risk / Confidence**")
-    lines.append("- A clear **Fix now / 7-day / 30-day** plan")
-    lines.append("- Observability gaps (what signals are missing) + what to instrument next")
-    lines.append("- Recommended 7-day sprint scope + success metrics")
+    lines.append("**Who it's for:** Teams with slow endpoints, DB bottlenecks, and a technical debt backlog they can’t get ahead of.")
     lines.append("")
-    lines.append("**Who it's for:** Small SaaS / agencies / teams with slow endpoints, DB bottlenecks, and a debt backlog they can't get ahead of.")
+    lines.append(f"**Next step:** [{cta_label}]({cta_url})")
+    lines.append("**$2,500 · 3 business days**")
     lines.append("")
-    lines.append("**Risk isolation:** Work performed on a US-hosted environment (client VDI or contractor US box). No production data stored locally; least-privilege access; changes documented.")
+    lines.append("**You’ll get:** prioritized punch list + sprint plan")
     lines.append("")
-    lines.append("**Next step:**")
+
+    # Optional: show both an email and a contact page link, if provided.
+    contact_bits: List[str] = []
+    if contact_line.strip():
+        contact_bits.append(f"[{contact_line.strip()}]({_as_mailto(contact_line)})")
+    if contact_url and contact_url != "#":
+        contact_bits.append(f"[Contact page]({contact_url})")
+    if contact_bits:
+        lines.append("**Contact:** " + " · ".join(contact_bits))
+        lines.append("")
+
+    lines.append("**Sample findings you might see:**")
+    lines.append("- N+1 query patterns or missing indexes driving high p95 latency")
+    lines.append("- Unsafe deploy or rollback risk caused by missing guardrails/tests")
+    lines.append("- Over-chatty services or lack of caching/batching increasing DB load")
     lines.append("")
-    lines.append(f"- [{cta_label}]({cta_url})")
-    lines.append(f"- [{contact_label}]({contact_url})")
-    lines.append(f"- {contact_line}")
-    lines.append("")
+
     lines.append(f"_Generated: {generated_at_iso}_")
     lines.append("")
 

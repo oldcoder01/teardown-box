@@ -23,12 +23,16 @@ def main(argv: list[str] | None = None) -> int:
     run_p.add_argument("--html", action="store_true", help="Also generate HTML output")
     run_p.add_argument("--cta-label", default="Book 15 minutes", help="CTA label shown near the top of the report")
     run_p.add_argument("--cta-url", default="#", help="CTA URL (Calendly, mailto, website contact page, etc.)")
-    run_p.add_argument("--contact-label", default="Request a QuickScan", help="Contact label shown near the top of the report")
-    run_p.add_argument("--contact-url", default="https://buzzyplanet.com/contact", help="Contact URL")
     run_p.add_argument(
         "--contact-line",
         default="Replace this with your email / Calendly link",
         help="Short contact note shown next to the CTA",
+    )
+
+    run_p.add_argument(
+        "--contact-url",
+        default="#",
+        help="Optional URL for a contact page (shown next to contact line).",
     )
 
     args = parser.parse_args(argv)
@@ -48,6 +52,7 @@ def main(argv: list[str] | None = None) -> int:
             cta_label=args.cta_label,
             cta_url=args.cta_url,
             contact_line=args.contact_line,
+            contact_url=args.contact_url,
         )
 
         md_path = out_dir / "sample-report.md"

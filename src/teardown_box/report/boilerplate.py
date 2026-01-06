@@ -9,7 +9,7 @@ It intentionally avoids invasive actions. Findings are prioritized by *severity 
 
 **Assumptions**
 - The snapshot is representative of normal and peak behavior (or at least of a recent incident window).
-- The environment is a typical internet-facing web app with a SQL-backed data tier (Postgres, SQL Server, MySQL, etc.).
+- The environment is a typical internet-facing web app with a SQL-backed data tier (Postgres / SQL Server / MySQL / etc.).
 - "Fix now" commands are intended to be safe and reversible, but should be validated in your environment.
 
 **Limits**
@@ -65,6 +65,12 @@ VERIFY_PLAN_MD = """\
 
 This is the short list of checks I run to turn snapshot findings into "we're sure" conclusions.
 
+**Day 0–3 flow**
+- Day 0: Intake + pick 2–5 target scenarios (slow endpoints/workflows)
+- Day 1–2: Evidence review + clarifying questions + draft findings
+- Day 3: Final report + readout + sprint-ready scope
+
+
 **Security**
 - Confirm firewall/SG reality vs host listeners (what is actually reachable from the internet).
 - Validate TLS termination point (CDN/WAF vs origin) and confirm enforced TLS versions/ciphers.
@@ -78,7 +84,7 @@ This is the short list of checks I run to turn snapshot findings into "we're sur
 **Performance**
 - Run EXPLAIN (ANALYZE, BUFFERS) on top queries with representative parameters.
 - Identify whether seq scans are driven by hot endpoints, background jobs, or analytics queries.
-- Check lock contention and connection churn (DB activity views/DMVs, pooler stats, deploy windows).
+- Check lock contention and connection churn (pg_stat_activity, pooler stats, deploy windows).
 
 **Cost**
 - Pull 30–90 days utilization and include peak events; validate headroom requirements.
