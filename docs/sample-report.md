@@ -1,14 +1,22 @@
 # Teardown Report (Sample)
 
-## Teardown in a Box (48-hour non-invasive teardown)
+## Performance & Debt QuickScan (3 business days, non-invasive)
 
-**What this is:** A fast, non-invasive teardown that turns a messy system into a prioritized fix list.
-**What you get:** A report like this + a short call to confirm priorities + a fix-now shortlist.
-**Who it's for:** Small SaaS / agencies / teams with recurring incidents, slow Postgres, and unclear next steps.
+A fast assessment that turns performance pain + technical debt into a prioritized, sprint-ready plan.
+
+**What you get:**
+- Top findings ranked by **Impact / Effort / Risk / Confidence**
+- A clear **Fix now / 7-day / 30-day** plan
+- Observability gaps (what signals are missing) + what to instrument next
+- Recommended 7-day sprint scope + success metrics
+
+**Who it's for:** Small SaaS / agencies / teams with slow endpoints, DB bottlenecks, and a debt backlog they can't get ahead of.
+
+**Risk isolation:** Work performed on a US-hosted environment (client VDI or contractor US box). No production data stored locally; least-privilege access; changes documented.
 
 **Next step:** [Book 15 minutes](https://calendly.com/jason-kelly-001/introcall) — info@buzzyplanet.com
 
-_Generated: 2026-01-05T12:56:44-08:00_
+_Generated: 2026-01-05T22:37:59-08:00_
 
 ## Executive summary
 
@@ -35,8 +43,8 @@ This report is generated from the following snapshot artifacts (synthetic fixtur
 
 ## Top 3 fix-now wins (highest ROI)
 
+- **[High] Database shows heavy time spent in a small set of queries (statement stats)** (Effort: Medium, Blast radius: Medium) — Fix now: *Validate query plans and implement the highest-impact index/query changes*
 - **[High] High sequential scan activity on large tables (public.orders, public.events)** (Effort: Medium, Blast radius: Medium) — Fix now: *Identify query patterns causing seq_scans and add targeted indexes*
-- **[High] Postgres shows heavy time spent in a small set of queries (pg_stat_statements)** (Effort: Medium, Blast radius: Medium) — Fix now: *Validate query plans and implement the highest-impact index/query changes*
 - **[High] Connection pool appears saturated (high client usage / waiting queue)** (Effort: Medium, Blast radius: Medium) — Fix now: *Reduce pool pressure and protect the DB from connection storms*
 
 ## Triage table (skim-friendly)
@@ -45,8 +53,8 @@ This report is generated from the following snapshot artifacts (synthetic fixtur
 |---|---|---|---|---|---|---|
 | Medium | Cost | [**Possible overprovisioning signal: m5.2xlarge at low p95 utilization**](#finding-0001) | If sustained utilization is low, you may be paying for capacity you don't need | Create a rightsizing candidate and validate against peak/burst patterns | Medium | High |
 | Low | Cost | [**EBS gp2 volumes detected; consider gp3 for cost/performance control**](#finding-0002) | gp3 often provides better baseline performance and more predictable tuning | Evaluate gp3 migration plan (low-risk, validate per workload) | Low | Medium |
-| High | Performance | [**High sequential scan activity on large tables (public.orders, public.events)**](#finding-0003) | Repeated sequential scans on large tables inflate latency and CPU, especially under concurrency | Identify query patterns causing seq_scans and add targeted indexes | Medium | Medium |
-| High | Performance | [**Postgres shows heavy time spent in a small set of queries (pg_stat_statements)**](#finding-0004) | A handful of queries often dominate database load | Validate query plans and implement the highest-impact index/query changes | Medium | Medium |
+| High | Performance | [**Database shows heavy time spent in a small set of queries (statement stats)**](#finding-0003) | A handful of queries often dominate database load | Validate query plans and implement the highest-impact index/query changes | Medium | Medium |
+| High | Performance | [**High sequential scan activity on large tables (public.orders, public.events)**](#finding-0004) | Repeated sequential scans on large tables inflate latency and CPU, especially under concurrency | Identify query patterns causing seq_scans and add targeted indexes | Medium | Medium |
 | High | Reliability | [**Connection pool appears saturated (high client usage / waiting queue)**](#finding-0005) | When the pool saturates, requests queue and tail latency spikes | Reduce pool pressure and protect the DB from connection storms | Medium | Medium |
 | High | Reliability | [**systemd service appears to be flapping (restart loop)**](#finding-0006) | Restart loops create intermittent downtime, amplify load (retry storms), and usually mask a real dependency issue (DB, DNS, config, or secr… | Pull recent logs and verify dependencies; add backoff while fixing root cause | Medium | Medium |
 | Medium | Reliability | [**Autovacuum pressure likely on (public.orders, public.events, public.sessions) with high dead tuple ratios**](#finding-0007) | High dead tuples increase bloat and slow queries (more pages to scan, worse cache locality) | Inspect worst tables and tune vacuum/analyze thresholds where needed | Medium | Medium |
@@ -62,7 +70,7 @@ It intentionally avoids invasive actions. Findings are prioritized by *severity 
 
 **Assumptions**
 - The snapshot is representative of normal and peak behavior (or at least of a recent incident window).
-- The environment is a typical internet-facing web app with a Postgres-backed data tier.
+- The environment is a typical internet-facing web app with a SQL-backed data tier (Postgres, SQL Server, MySQL, etc.).
 - "Fix now" commands are intended to be safe and reversible, but should be validated in your environment.
 
 **Limits**
@@ -108,7 +116,7 @@ Prospects often worry that a contractor needs deep access. This teardown can be 
 **Option C — Timeboxed elevated access (rare)**
 - Only if required for a specific fix (e.g., emergency mitigation), with explicit scope and a rollback plan.
 
-## What I would verify with real access (48-hour verification plan)
+## What I would verify with real access (3-day QuickScan plan)
 
 This is the short list of checks I run to turn snapshot findings into "we're sure" conclusions.
 
@@ -125,7 +133,7 @@ This is the short list of checks I run to turn snapshot findings into "we're sur
 **Performance**
 - Run EXPLAIN (ANALYZE, BUFFERS) on top queries with representative parameters.
 - Identify whether seq scans are driven by hot endpoints, background jobs, or analytics queries.
-- Check lock contention and connection churn (pg_stat_activity, pooler stats, deploy windows).
+- Check lock contention and connection churn (DB activity views/DMVs, pooler stats, deploy windows).
 
 **Cost**
 - Pull 30–90 days utilization and include peak events; validate headroom requirements.
@@ -393,43 +401,7 @@ sudo systemctl restart systemd-journald || true
 ### Performance
 
 <a id="finding-0003"></a>
-#### [High] High sequential scan activity on large tables (public.orders, public.events)
-
-**Impact:** Repeated sequential scans on large tables inflate latency and CPU, especially under concurrency. This is a common root cause of 'DB is slow' incidents.
-
-**Confidence:** Medium
-
-**Effort / Blast radius:** Medium / Medium
-
-**Evidence:**
-- [fixtures/postgres/pg_stat_user_tables.csv (Tables with high reltuples and high seq_scan)](#ev-909b017bb4)
-
-**Fix now:** Identify query patterns causing seq_scans and add targeted indexes
-
-```bash
-# Map top seq_scans to query patterns (pg_stat_statements + logs)
-# Run EXPLAIN (ANALYZE, BUFFERS) to confirm scan type and cost
-# Add the smallest viable index to support the common filter/order
-psql -c "SELECT relname, seq_scan, idx_scan, n_live_tup, n_dead_tup FROM pg_stat_user_tables ORDER BY seq_scan DESC LIMIT 20;"
-```
-
-**7-day plan:**
-- Map top seq_scanned tables to specific endpoints/jobs.
-- Implement 1-2 high-ROI fixes (index or query rewrite) and measure p95 before/after.
-- Ensure stats are current (ANALYZE) for affected tables.
-
-**30-day plan:**
-- Add performance dashboards/alerts (DB CPU, buffer hit rate, slow query spikes).
-- Review ORM/query patterns (wide SELECT *, missing filters) driving scans.
-- Consider partitioning for large time-series tables if growth continues.
-
-**Questions I need answered:**
-- Are these tables expected to be scan-heavy (analytics), or OLTP hot paths?
-- Do you have read replicas or a separate analytics store?
-- Any existing indexes that are unused or misaligned with query patterns?
-
-<a id="finding-0004"></a>
-#### [High] Postgres shows heavy time spent in a small set of queries (pg_stat_statements)
+#### [High] Database shows heavy time spent in a small set of queries (statement stats)
 
 **Impact:** A handful of queries often dominate database load. Improving them typically reduces p95 latency, stabilizes CPU, and lowers infra cost by delaying scale-up.
 
@@ -465,6 +437,42 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_sessions_token ON public.sessions (s
 - Are these queries representative of peak traffic (same workload + time window)?
 - Any hard constraints on index build time / lock tolerance?
 - Is read/write split or partitioning on the roadmap?
+
+<a id="finding-0004"></a>
+#### [High] High sequential scan activity on large tables (public.orders, public.events)
+
+**Impact:** Repeated sequential scans on large tables inflate latency and CPU, especially under concurrency. This is a common root cause of 'DB is slow' incidents.
+
+**Confidence:** Medium
+
+**Effort / Blast radius:** Medium / Medium
+
+**Evidence:**
+- [fixtures/postgres/pg_stat_user_tables.csv (Tables with high reltuples and high seq_scan)](#ev-909b017bb4)
+
+**Fix now:** Identify query patterns causing seq_scans and add targeted indexes
+
+```bash
+# Map top seq_scans to query patterns (pg_stat_statements + logs)
+# Run EXPLAIN (ANALYZE, BUFFERS) to confirm scan type and cost
+# Add the smallest viable index to support the common filter/order
+psql -c "SELECT relname, seq_scan, idx_scan, n_live_tup, n_dead_tup FROM pg_stat_user_tables ORDER BY seq_scan DESC LIMIT 20;"
+```
+
+**7-day plan:**
+- Map top seq_scanned tables to specific endpoints/jobs.
+- Implement 1-2 high-ROI fixes (index or query rewrite) and measure p95 before/after.
+- Ensure stats are current (ANALYZE) for affected tables.
+
+**30-day plan:**
+- Add performance dashboards/alerts (DB CPU, buffer hit rate, slow query spikes).
+- Review ORM/query patterns (wide SELECT *, missing filters) driving scans.
+- Consider partitioning for large time-series tables if growth continues.
+
+**Questions I need answered:**
+- Are these tables expected to be scan-heavy (analytics), or OLTP hot paths?
+- Do you have read replicas or a separate analytics store?
+- Any existing indexes that are unused or misaligned with query patterns?
 
 
 ### Cost

@@ -134,15 +134,22 @@ def render_markdown(
     lines.append("")
 
     # ---- Front door: one-screen intro + CTA ----
-    lines.append("## Teardown in a Box (48-hour non-invasive teardown)")
+    lines.append("## Performance & Debt QuickScan (3 business days, non-invasive)")
     lines.append("")
-    lines.append("**What this is:** A fast, non-invasive teardown that turns a messy system into a prioritized fix list.")
-    lines.append("**What you get:** A report like this + a short call to confirm priorities + a fix-now shortlist.")
-    lines.append("**Who it's for:** Small SaaS / agencies / teams with recurring incidents, slow Postgres, and unclear next steps.")
+    lines.append("A fast assessment that turns performance pain + technical debt into a prioritized, sprint-ready plan.")
+    lines.append("")
+    lines.append("**What you get:**")
+    lines.append("- Top findings ranked by **Impact / Effort / Risk / Confidence**")
+    lines.append("- A clear **Fix now / 7-day / 30-day** plan")
+    lines.append("- Observability gaps (what signals are missing) + what to instrument next")
+    lines.append("- Recommended 7-day sprint scope + success metrics")
+    lines.append("")
+    lines.append("**Who it's for:** Small SaaS / agencies / teams with slow endpoints, DB bottlenecks, and a debt backlog they can't get ahead of.")
+    lines.append("")
+    lines.append("**Risk isolation:** Work performed on a US-hosted environment (client VDI or contractor US box). No production data stored locally; least-privilege access; changes documented.")
     lines.append("")
     lines.append(f"**Next step:** [{cta_label}]({cta_url}) — {contact_line}")
     lines.append("")
-
     lines.append(f"_Generated: {generated_at_iso}_")
     lines.append("")
 

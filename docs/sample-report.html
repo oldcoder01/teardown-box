@@ -104,7 +104,7 @@
     <div class="toc">
 <ul>
 <li><a href="#teardown-report-sample">Teardown Report (Sample)</a><ul>
-<li><a href="#teardown-in-a-box-48-hour-non-invasive-teardown">Teardown in a Box (48-hour non-invasive teardown)</a></li>
+<li><a href="#performance-debt-quickscan-3-business-days-non-invasive">Performance &amp; Debt QuickScan (3 business days, non-invasive)</a></li>
 <li><a href="#executive-summary">Executive summary</a></li>
 <li><a href="#inputs-reviewed-scope">Inputs reviewed (scope)</a></li>
 <li><a href="#top-3-fix-now-wins-highest-roi">Top 3 fix-now wins (highest ROI)</a></li>
@@ -112,7 +112,7 @@
 <li><a href="#assumptions-limits-what-this-report-is-isnt">Assumptions &amp; limits (what this report is / isn't)</a></li>
 <li><a href="#scoring-rubric-how-to-read-this-report">Scoring rubric (how to read this report)</a></li>
 <li><a href="#what-i-need-from-you-access-options">What I need from you (access options)</a></li>
-<li><a href="#what-i-would-verify-with-real-access-48-hour-verification-plan">What I would verify with real access (48-hour verification plan)</a></li>
+<li><a href="#what-i-would-verify-with-real-access-3-day-quickscan-plan">What I would verify with real access (3-day QuickScan plan)</a></li>
 <li><a href="#findings">Findings</a><ul>
 <li><a href="#security">Security</a><ul>
 <li><a href="#high-unexpected-public-listener-detected-on-port-5432">[High] Unexpected public listener detected on port 5432</a></li>
@@ -128,8 +128,8 @@
 </ul>
 </li>
 <li><a href="#performance">Performance</a><ul>
+<li><a href="#high-database-shows-heavy-time-spent-in-a-small-set-of-queries-statement-stats">[High] Database shows heavy time spent in a small set of queries (statement stats)</a></li>
 <li><a href="#high-high-sequential-scan-activity-on-large-tables-publicorders-publicevents">[High] High sequential scan activity on large tables (public.orders, public.events)</a></li>
-<li><a href="#high-postgres-shows-heavy-time-spent-in-a-small-set-of-queries-pg_stat_statements">[High] Postgres shows heavy time spent in a small set of queries (pg_stat_statements)</a></li>
 </ul>
 </li>
 <li><a href="#cost">Cost</a><ul>
@@ -158,12 +158,17 @@
 </ul>
 </div>
 <h1 id="teardown-report-sample">Teardown Report (Sample)</h1>
-<h2 id="teardown-in-a-box-48-hour-non-invasive-teardown">Teardown in a Box (48-hour non-invasive teardown)</h2>
-<p><strong>What this is:</strong> A fast, non-invasive teardown that turns a messy system into a prioritized fix list.
-<strong>What you get:</strong> A report like this + a short call to confirm priorities + a fix-now shortlist.
-<strong>Who it's for:</strong> Small SaaS / agencies / teams with recurring incidents, slow Postgres, and unclear next steps.</p>
+<h2 id="performance-debt-quickscan-3-business-days-non-invasive">Performance &amp; Debt QuickScan (3 business days, non-invasive)</h2>
+<p>A fast assessment that turns performance pain + technical debt into a prioritized, sprint-ready plan.</p>
+<p><strong>What you get:</strong>
+- Top findings ranked by <strong>Impact / Effort / Risk / Confidence</strong>
+- A clear <strong>Fix now / 7-day / 30-day</strong> plan
+- Observability gaps (what signals are missing) + what to instrument next
+- Recommended 7-day sprint scope + success metrics</p>
+<p><strong>Who it's for:</strong> Small SaaS / agencies / teams with slow endpoints, DB bottlenecks, and a debt backlog they can't get ahead of.</p>
+<p><strong>Risk isolation:</strong> Work performed on a US-hosted environment (client VDI or contractor US box). No production data stored locally; least-privilege access; changes documented.</p>
 <p><strong>Next step:</strong> <a href="https://calendly.com/jason-kelly-001/introcall">Book 15 minutes</a> — info@buzzyplanet.com</p>
-<p><em>Generated: 2026-01-05T12:56:44-08:00</em></p>
+<p><em>Generated: 2026-01-05T22:37:59-08:00</em></p>
 <h2 id="executive-summary">Executive summary</h2>
 <ul>
 <li>Findings: 11 total</li>
@@ -188,8 +193,8 @@
 </ul>
 <h2 id="top-3-fix-now-wins-highest-roi">Top 3 fix-now wins (highest ROI)</h2>
 <ul>
+<li><strong>[High] Database shows heavy time spent in a small set of queries (statement stats)</strong> (Effort: Medium, Blast radius: Medium) — Fix now: <em>Validate query plans and implement the highest-impact index/query changes</em></li>
 <li><strong>[High] High sequential scan activity on large tables (public.orders, public.events)</strong> (Effort: Medium, Blast radius: Medium) — Fix now: <em>Identify query patterns causing seq_scans and add targeted indexes</em></li>
-<li><strong>[High] Postgres shows heavy time spent in a small set of queries (pg_stat_statements)</strong> (Effort: Medium, Blast radius: Medium) — Fix now: <em>Validate query plans and implement the highest-impact index/query changes</em></li>
 <li><strong>[High] Connection pool appears saturated (high client usage / waiting queue)</strong> (Effort: Medium, Blast radius: Medium) — Fix now: <em>Reduce pool pressure and protect the DB from connection storms</em></li>
 </ul>
 <h2 id="triage-table-skim-friendly">Triage table (skim-friendly)</h2>
@@ -227,18 +232,18 @@
 <tr>
 <td>High</td>
 <td>Performance</td>
-<td><a href="#finding-0003"><strong>High sequential scan activity on large tables (public.orders, public.events)</strong></a></td>
-<td>Repeated sequential scans on large tables inflate latency and CPU, especially under concurrency</td>
-<td>Identify query patterns causing seq_scans and add targeted indexes</td>
+<td><a href="#finding-0003"><strong>Database shows heavy time spent in a small set of queries (statement stats)</strong></a></td>
+<td>A handful of queries often dominate database load</td>
+<td>Validate query plans and implement the highest-impact index/query changes</td>
 <td>Medium</td>
 <td>Medium</td>
 </tr>
 <tr>
 <td>High</td>
 <td>Performance</td>
-<td><a href="#finding-0004"><strong>Postgres shows heavy time spent in a small set of queries (pg_stat_statements)</strong></a></td>
-<td>A handful of queries often dominate database load</td>
-<td>Validate query plans and implement the highest-impact index/query changes</td>
+<td><a href="#finding-0004"><strong>High sequential scan activity on large tables (public.orders, public.events)</strong></a></td>
+<td>Repeated sequential scans on large tables inflate latency and CPU, especially under concurrency</td>
+<td>Identify query patterns causing seq_scans and add targeted indexes</td>
 <td>Medium</td>
 <td>Medium</td>
 </tr>
@@ -312,7 +317,7 @@
 It intentionally avoids invasive actions. Findings are prioritized by <em>severity x impact x confidence</em>.</p>
 <p><strong>Assumptions</strong>
 - The snapshot is representative of normal and peak behavior (or at least of a recent incident window).
-- The environment is a typical internet-facing web app with a Postgres-backed data tier.
+- The environment is a typical internet-facing web app with a SQL-backed data tier (Postgres, SQL Server, MySQL, etc.).
 - "Fix now" commands are intended to be safe and reversible, but should be validated in your environment.</p>
 <p><strong>Limits</strong>
 - No live access was used for this demo; real environments require verification (config drift, active traffic, dependencies).
@@ -346,7 +351,7 @@ It intentionally avoids invasive actions. Findings are prioritized by <em>severi
 - This turns "likely" into "we're sure" without invasive changes.</p>
 <p><strong>Option C — Timeboxed elevated access (rare)</strong>
 - Only if required for a specific fix (e.g., emergency mitigation), with explicit scope and a rollback plan.</p>
-<h2 id="what-i-would-verify-with-real-access-48-hour-verification-plan">What I would verify with real access (48-hour verification plan)</h2>
+<h2 id="what-i-would-verify-with-real-access-3-day-quickscan-plan">What I would verify with real access (3-day QuickScan plan)</h2>
 <p>This is the short list of checks I run to turn snapshot findings into "we're sure" conclusions.</p>
 <p><strong>Security</strong>
 - Confirm firewall/SG reality vs host listeners (what is actually reachable from the internet).
@@ -359,7 +364,7 @@ It intentionally avoids invasive actions. Findings are prioritized by <em>severi
 <p><strong>Performance</strong>
 - Run EXPLAIN (ANALYZE, BUFFERS) on top queries with representative parameters.
 - Identify whether seq scans are driven by hot endpoints, background jobs, or analytics queries.
-- Check lock contention and connection churn (pg_stat_activity, pooler stats, deploy windows).</p>
+- Check lock contention and connection churn (DB activity views/DMVs, pooler stats, deploy windows).</p>
 <p><strong>Cost</strong>
 - Pull 30–90 days utilization and include peak events; validate headroom requirements.
 - Confirm storage policy: gp2/gp3 usage, snapshot retention, orphaned volumes.
@@ -541,32 +546,7 @@ sudo systemctl restart systemd-journald || true
 - What is your on-call policy for disk alerts (page vs ticket)?</p>
 <h3 id="performance">Performance</h3>
 <p><a id="finding-0003"></a></p>
-<h4 id="high-high-sequential-scan-activity-on-large-tables-publicorders-publicevents">[High] High sequential scan activity on large tables (public.orders, public.events)</h4>
-<p><strong>Impact:</strong> Repeated sequential scans on large tables inflate latency and CPU, especially under concurrency. This is a common root cause of 'DB is slow' incidents.</p>
-<p><strong>Confidence:</strong> Medium</p>
-<p><strong>Effort / Blast radius:</strong> Medium / Medium</p>
-<p><strong>Evidence:</strong>
-- <a href="#ev-909b017bb4">fixtures/postgres/pg_stat_user_tables.csv (Tables with high reltuples and high seq_scan)</a></p>
-<p><strong>Fix now:</strong> Identify query patterns causing seq_scans and add targeted indexes</p>
-<pre><code class="language-bash"># Map top seq_scans to query patterns (pg_stat_statements + logs)
-# Run EXPLAIN (ANALYZE, BUFFERS) to confirm scan type and cost
-# Add the smallest viable index to support the common filter/order
-psql -c &quot;SELECT relname, seq_scan, idx_scan, n_live_tup, n_dead_tup FROM pg_stat_user_tables ORDER BY seq_scan DESC LIMIT 20;&quot;
-</code></pre>
-<p><strong>7-day plan:</strong>
-- Map top seq_scanned tables to specific endpoints/jobs.
-- Implement 1-2 high-ROI fixes (index or query rewrite) and measure p95 before/after.
-- Ensure stats are current (ANALYZE) for affected tables.</p>
-<p><strong>30-day plan:</strong>
-- Add performance dashboards/alerts (DB CPU, buffer hit rate, slow query spikes).
-- Review ORM/query patterns (wide SELECT *, missing filters) driving scans.
-- Consider partitioning for large time-series tables if growth continues.</p>
-<p><strong>Questions I need answered:</strong>
-- Are these tables expected to be scan-heavy (analytics), or OLTP hot paths?
-- Do you have read replicas or a separate analytics store?
-- Any existing indexes that are unused or misaligned with query patterns?</p>
-<p><a id="finding-0004"></a></p>
-<h4 id="high-postgres-shows-heavy-time-spent-in-a-small-set-of-queries-pg_stat_statements">[High] Postgres shows heavy time spent in a small set of queries (pg_stat_statements)</h4>
+<h4 id="high-database-shows-heavy-time-spent-in-a-small-set-of-queries-statement-stats">[High] Database shows heavy time spent in a small set of queries (statement stats)</h4>
 <p><strong>Impact:</strong> A handful of queries often dominate database load. Improving them typically reduces p95 latency, stabilizes CPU, and lowers infra cost by delaying scale-up.</p>
 <p><strong>Confidence:</strong> Medium</p>
 <p><strong>Effort / Blast radius:</strong> Medium / Medium</p>
@@ -592,6 +572,31 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_sessions_token ON public.sessions (s
 - Are these queries representative of peak traffic (same workload + time window)?
 - Any hard constraints on index build time / lock tolerance?
 - Is read/write split or partitioning on the roadmap?</p>
+<p><a id="finding-0004"></a></p>
+<h4 id="high-high-sequential-scan-activity-on-large-tables-publicorders-publicevents">[High] High sequential scan activity on large tables (public.orders, public.events)</h4>
+<p><strong>Impact:</strong> Repeated sequential scans on large tables inflate latency and CPU, especially under concurrency. This is a common root cause of 'DB is slow' incidents.</p>
+<p><strong>Confidence:</strong> Medium</p>
+<p><strong>Effort / Blast radius:</strong> Medium / Medium</p>
+<p><strong>Evidence:</strong>
+- <a href="#ev-909b017bb4">fixtures/postgres/pg_stat_user_tables.csv (Tables with high reltuples and high seq_scan)</a></p>
+<p><strong>Fix now:</strong> Identify query patterns causing seq_scans and add targeted indexes</p>
+<pre><code class="language-bash"># Map top seq_scans to query patterns (pg_stat_statements + logs)
+# Run EXPLAIN (ANALYZE, BUFFERS) to confirm scan type and cost
+# Add the smallest viable index to support the common filter/order
+psql -c &quot;SELECT relname, seq_scan, idx_scan, n_live_tup, n_dead_tup FROM pg_stat_user_tables ORDER BY seq_scan DESC LIMIT 20;&quot;
+</code></pre>
+<p><strong>7-day plan:</strong>
+- Map top seq_scanned tables to specific endpoints/jobs.
+- Implement 1-2 high-ROI fixes (index or query rewrite) and measure p95 before/after.
+- Ensure stats are current (ANALYZE) for affected tables.</p>
+<p><strong>30-day plan:</strong>
+- Add performance dashboards/alerts (DB CPU, buffer hit rate, slow query spikes).
+- Review ORM/query patterns (wide SELECT *, missing filters) driving scans.
+- Consider partitioning for large time-series tables if growth continues.</p>
+<p><strong>Questions I need answered:</strong>
+- Are these tables expected to be scan-heavy (analytics), or OLTP hot paths?
+- Do you have read replicas or a separate analytics store?
+- Any existing indexes that are unused or misaligned with query patterns?</p>
 <h3 id="cost">Cost</h3>
 <p><a id="finding-0001"></a></p>
 <h4 id="medium-possible-overprovisioning-signal-m52xlarge-at-low-p95-utilization">[Medium] Possible overprovisioning signal: m5.2xlarge at low p95 utilization</h4>

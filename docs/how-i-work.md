@@ -1,4 +1,4 @@
-# How I work (48-hour teardown)
+# How I work (3-day QuickScan)
 
 This is the same playbook I use on real systems. The CLI demo is a portable version of the workflow.
 

@@ -9,7 +9,7 @@ It intentionally avoids invasive actions. Findings are prioritized by *severity 
 
 **Assumptions**
 - The snapshot is representative of normal and peak behavior (or at least of a recent incident window).
-- The environment is a typical internet-facing web app with a Postgres-backed data tier.
+- The environment is a typical internet-facing web app with a SQL-backed data tier (Postgres, SQL Server, MySQL, etc.).
 - "Fix now" commands are intended to be safe and reversible, but should be validated in your environment.
 
 **Limits**
@@ -61,7 +61,7 @@ Prospects often worry that a contractor needs deep access. This teardown can be 
 
 
 VERIFY_PLAN_MD = """\
-## What I would verify with real access (48-hour verification plan)
+## What I would verify with real access (3-day QuickScan plan)
 
 This is the short list of checks I run to turn snapshot findings into "we're sure" conclusions.
 
@@ -78,7 +78,7 @@ This is the short list of checks I run to turn snapshot findings into "we're sur
 **Performance**
 - Run EXPLAIN (ANALYZE, BUFFERS) on top queries with representative parameters.
 - Identify whether seq scans are driven by hot endpoints, background jobs, or analytics queries.
-- Check lock contention and connection churn (pg_stat_activity, pooler stats, deploy windows).
+- Check lock contention and connection churn (DB activity views/DMVs, pooler stats, deploy windows).
 
 **Cost**
 - Pull 30–90 days utilization and include peak events; validate headroom requirements.
