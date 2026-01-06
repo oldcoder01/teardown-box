@@ -102,6 +102,7 @@ def render_markdown(
     fixtures_root: Optional[str] = None,
     cta_label: str = "Book 15 minutes",
     cta_url: str = "#",
+    contact_label: str = "Request a QuickScan",
     contact_line: str = "Replace this with your email / Calendly link",
     contact_url: str = "#",
 ) -> str:
@@ -148,8 +149,12 @@ def render_markdown(
     lines.append("")
     lines.append("**Who it's for:** Teams with slow endpoints, DB bottlenecks, and a technical debt backlog they can’t get ahead of.")
     lines.append("")
-    lines.append(f"**Next step:** [{cta_label}]({cta_url})")
-    lines.append("**$2,500 · 3 business days**")
+    lines.append("**Next step:**")
+    lines.append("")
+    lines.append(f"- [{cta_label}]({cta_url})")
+    lines.append(f"- [{contact_label}]({contact_url}) **$2,500 · 3 business days**")
+    lines.append(f"- {contact_line}")
+    lines.append("")
     lines.append("")
     lines.append("**You’ll get:** prioritized punch list + sprint plan")
     lines.append("")

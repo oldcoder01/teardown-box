@@ -6,8 +6,12 @@
 
 **Who it's for:** Teams with slow endpoints, DB bottlenecks, and a technical debt backlog they can’t get ahead of.
 
-**Next step:** [Book 15 minutes](https://calendly.com/jason-kelly-001/introcall)
-**$2,500 · 3 business days**
+**Next step:**
+
+- [Book 15 minutes](https://calendly.com/jason-kelly-001/introcall)
+- [Request a QuickScan](https://buzzyplanet.com/contact) **$2,500 · 3 business days**
+- info@buzzyplanet.com
+
 
 **You’ll get:** prioritized punch list + sprint plan
 
@@ -18,7 +22,7 @@
 - Unsafe deploy or rollback risk caused by missing guardrails/tests
 - Over-chatty services or lack of caching/batching increasing DB load
 
-_Generated: 2026-01-06T08:41:31-08:00_
+_Generated: 2026-01-06T09:03:26-08:00_
 
 ## Executive summary
 
