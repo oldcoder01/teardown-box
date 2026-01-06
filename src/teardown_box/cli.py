@@ -23,6 +23,8 @@ def main(argv: list[str] | None = None) -> int:
     run_p.add_argument("--html", action="store_true", help="Also generate HTML output")
     run_p.add_argument("--cta-label", default="Book 15 minutes", help="CTA label shown near the top of the report")
     run_p.add_argument("--cta-url", default="#", help="CTA URL (Calendly, mailto, website contact page, etc.)")
+    run_p.add_argument("--contact-label", default="Request a QuickScan", help="Contact label shown near the top of the report")
+    run_p.add_argument("--contact-url", default="https://buzzyplanet.com/contact", help="Contact URL")
     run_p.add_argument(
         "--contact-line",
         default="Replace this with your email / Calendly link",

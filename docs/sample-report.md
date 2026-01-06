@@ -14,9 +14,13 @@ A fast assessment that turns performance pain + technical debt into a prioritize
 
 **Risk isolation:** Work performed on a US-hosted environment (client VDI or contractor US box). No production data stored locally; least-privilege access; changes documented.
 
-**Next step:** [Book 15 minutes](https://calendly.com/jason-kelly-001/introcall) — info@buzzyplanet.com
+**Next step:**
 
-_Generated: 2026-01-05T22:37:59-08:00_
+- [Book 15 minutes](https://calendly.com/jason-kelly-001/introcall)
+- [Request a QuickScan](https://buzzyplanet.com/contact)
+- info@buzzyplanet.com
+
+_Generated: 2026-01-05T22:58:48-08:00_
 
 ## Executive summary
 

@@ -95,6 +95,8 @@ def render_markdown(
     fixtures_root: Optional[str] = None,
     cta_label: str = "Book 15 minutes",
     cta_url: str = "#",
+    contact_label: str = "Request a QuickScan",
+    contact_url: str = "https://buzzyplanet.com/contact",
     contact_line: str = "Replace this with your email / Calendly link",
 ) -> str:
     findings_sorted = sorted(findings, key=finding_sort_key)
@@ -148,7 +150,11 @@ def render_markdown(
     lines.append("")
     lines.append("**Risk isolation:** Work performed on a US-hosted environment (client VDI or contractor US box). No production data stored locally; least-privilege access; changes documented.")
     lines.append("")
-    lines.append(f"**Next step:** [{cta_label}]({cta_url}) — {contact_line}")
+    lines.append("**Next step:**")
+    lines.append("")
+    lines.append(f"- [{cta_label}]({cta_url})")
+    lines.append(f"- [{contact_label}]({contact_url})")
+    lines.append(f"- {contact_line}")
     lines.append("")
     lines.append(f"_Generated: {generated_at_iso}_")
     lines.append("")
